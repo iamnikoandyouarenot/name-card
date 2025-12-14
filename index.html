@@ -294,6 +294,8 @@
             justify-content: center;
             font-size: 22px;
             font-weight: 700;
+            background-size: cover;
+            background-position: center;
         }
 
         .card-name {
@@ -349,6 +351,17 @@
             border-left: 3px solid var(--border);
         }
 
+        /* 名片縮圖 */
+        .card-image-thumb {
+            width: 100%;
+            height: 80px;
+            margin-top: 12px;
+            border-radius: 8px;
+            background-size: cover;
+            background-position: center;
+            border: 1px solid var(--border);
+        }
+
         /* 分類顏色 */
         .cat-客戶 { background: #fef3c7; color: #92400e; border-color: #f59e0b; }
         .cat-供應商 { background: #dbeafe; color: #1e40af; border-color: #3b82f6; }
@@ -393,7 +406,7 @@
             border-radius: 20px;
             padding: 28px;
             width: 100%;
-            max-width: 500px;
+            max-width: 520px;
             max-height: 90vh;
             overflow-y: auto;
             border: 1px solid var(--border);
@@ -556,7 +569,7 @@
             cursor: not-allowed;
         }
 
-        #cameraInput {
+        #cameraInput, #avatarInput {
             display: none;
         }
 
@@ -586,6 +599,65 @@
             line-height: 1.6;
             white-space: pre-wrap;
             word-break: break-all;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        /* 大頭照區 */
+        .avatar-section {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 20px;
+            padding: 16px;
+            background: rgba(255,255,255,0.04);
+            border-radius: 12px;
+        }
+
+        .avatar-preview {
+            width: 80px;
+            height: 80px;
+            border-radius: 16px;
+            background: rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            background-size: cover;
+            background-position: center;
+            border: 2px dashed var(--border);
+            flex-shrink: 0;
+        }
+
+        .avatar-preview.has-image {
+            border-style: solid;
+            border-color: var(--primary);
+        }
+
+        .avatar-info {
+            flex: 1;
+        }
+
+        .avatar-info h4 {
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .avatar-info p {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+        }
+
+        .avatar-btn {
+            padding: 8px 14px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 13px;
+            cursor: pointer;
+            font-family: inherit;
         }
 
         /* 詳細檢視 */
@@ -596,14 +668,17 @@
         }
 
         .detail-avatar {
-            width: 70px;
-            height: 70px;
+            width: 80px;
+            height: 80px;
             border-radius: 18px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 30px;
+            font-size: 34px;
             font-weight: 700;
+            background-size: cover;
+            background-position: center;
+            flex-shrink: 0;
         }
 
         .detail-info h2 {
@@ -689,6 +764,14 @@
         .detail-notes p {
             font-size: 14px;
             line-height: 1.6;
+        }
+
+        /* 名片圖片詳細 */
+        .detail-card-image {
+            width: 100%;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            border: 1px solid var(--border);
         }
 
         /* 空狀態 */
@@ -810,6 +893,11 @@
             .stat-value {
                 font-size: 22px;
             }
+
+            .avatar-section {
+                flex-direction: column;
+                text-align: center;
+            }
         }
     </style>
 </head>
@@ -882,27 +970,41 @@
                 <button class="modal-close" onclick="closeAddModal()">✕</button>
             </div>
 
-            <!-- 拍照區 -->
+            <!-- 拍照區（名片） -->
             <div class="camera-section">
                 <img id="cameraPreview" class="camera-preview" alt="名片預覽">
                 <input type="file" id="cameraInput" accept="image/*" capture="environment" onchange="handleImageSelect(event)">
                 <div class="camera-btns">
                     <button class="camera-btn capture" onclick="document.getElementById('cameraInput').click()">
-                        📷 拍照/選擇圖片
+                        📷 拍名片
                     </button>
                     <button class="camera-btn recognize" id="recognizeBtn" onclick="recognizeCard()" disabled>
-                        🔍 辨識名片
+                        🔍 辨識文字
                     </button>
                 </div>
                 <div class="ocr-result" id="ocrResult">
-                    <h4>📝 辨識結果</h4>
+                    <h4>📝 辨識結果（已自動填入欄位）</h4>
                     <div class="ocr-text" id="ocrText"></div>
+                </div>
+            </div>
+
+            <!-- 大頭照區 -->
+            <div class="avatar-section">
+                <div class="avatar-preview" id="avatarPreview">👤</div>
+                <input type="file" id="avatarInput" accept="image/*" onchange="handleAvatarSelect(event)">
+                <div class="avatar-info">
+                    <h4>📸 大頭照（選填）</h4>
+                    <p>上傳聯絡人照片，方便辨識</p>
+                    <button type="button" class="avatar-btn" onclick="document.getElementById('avatarInput').click()">選擇照片</button>
                 </div>
             </div>
 
             <!-- 表單 -->
             <form id="cardForm" onsubmit="saveCard(event)">
                 <input type="hidden" id="cardId">
+                <input type="hidden" id="cardImage">
+                <input type="hidden" id="cardAvatar">
+                
                 <div class="form-row">
                     <div class="form-group">
                         <label class="form-label">👤 姓名 *</label>
@@ -936,6 +1038,16 @@
                     <div class="form-group">
                         <label class="form-label">💬 LINE ID</label>
                         <input type="text" class="form-input highlight" id="cardLine" placeholder="your_line_id">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">📠 傳真</label>
+                        <input type="tel" class="form-input" id="cardFax" placeholder="02-1234-5678">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">📱 手機2</label>
+                        <input type="tel" class="form-input" id="cardMobile2" placeholder="第二支手機號碼">
                     </div>
                 </div>
                 <div class="form-group">
@@ -985,6 +1097,7 @@
         let cards = [];
         let currentCategory = '全部';
         let currentImage = null;
+        let currentAvatar = null;
         let editingId = null;
 
         // ===== 初始化 =====
@@ -1022,7 +1135,7 @@
             text.textContent = '同步中...';
 
             try {
-                const url = `https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/A:K?key=${CONFIG.SHEET_API_KEY}`;
+                const url = `https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/A:O?key=${CONFIG.SHEET_API_KEY}`;
                 const res = await fetch(url);
                 const data = await res.json();
 
@@ -1039,7 +1152,11 @@
                         category: row[7] || '其他',
                         address: row[8] || '',
                         website: row[9] || '',
-                        notes: row[10] || ''
+                        notes: row[10] || '',
+                        fax: row[11] || '',
+                        mobile2: row[12] || '',
+                        cardImage: row[13] || '',
+                        avatar: row[14] || ''
                     })).filter(c => c.name);
 
                     saveToLocal();
@@ -1053,26 +1170,6 @@
 
             dot.className = 'sync-dot';
             text.textContent = '已同步';
-        }
-
-        async function saveToSheet(card, isNew = true) {
-            const dot = document.getElementById('syncDot');
-            dot.className = 'sync-dot syncing';
-
-            try {
-                // 使用 Google Apps Script Web App 來寫入
-                // 這裡先存本地，提示用戶手動同步
-                saveToLocal();
-                
-                // 顯示提示
-                showNotification('✅ 已儲存！請到 Google Sheets 確認');
-                
-            } catch (err) {
-                console.error('儲存到雲端失敗:', err);
-                showNotification('已存本地，雲端同步失敗', true);
-            }
-
-            dot.className = 'sync-dot';
         }
 
         // ===== 渲染名片 =====
@@ -1096,11 +1193,15 @@
                 return;
             }
 
-            grid.innerHTML = filtered.map(card => `
+            grid.innerHTML = filtered.map(card => {
+                const avatarStyle = card.avatar 
+                    ? `background-image: url('${card.avatar}'); color: transparent;` 
+                    : '';
+                return `
                 <div class="card" onclick="openDetailModal('${card.id}')">
                     <span class="card-category cat-${card.category}">${card.category}</span>
                     <div class="card-header">
-                        <div class="card-avatar avatar-${card.category}">${card.name.charAt(0)}</div>
+                        <div class="card-avatar avatar-${card.category}" style="${avatarStyle}">${card.avatar ? '' : card.name.charAt(0)}</div>
                         <div>
                             <div class="card-name">${escapeHtml(card.name)}</div>
                             <div class="card-title">${escapeHtml(card.title) || '—'}</div>
@@ -1113,8 +1214,9 @@
                         ${card.email ? `<div class="card-contact">✉️ ${escapeHtml(card.email)}</div>` : ''}
                     </div>
                     ${card.notes ? `<div class="card-notes">📝 ${escapeHtml(card.notes.substring(0, 50))}${card.notes.length > 50 ? '...' : ''}</div>` : ''}
+                    ${card.cardImage ? `<div class="card-image-thumb" style="background-image: url('${card.cardImage}')"></div>` : ''}
                 </div>
-            `).join('');
+            `}).join('');
         }
 
         function filterCardsList() {
@@ -1149,10 +1251,16 @@
             document.getElementById('modalTitle').textContent = '➕ 新增名片';
             document.getElementById('cardForm').reset();
             document.getElementById('cardId').value = '';
+            document.getElementById('cardImage').value = '';
+            document.getElementById('cardAvatar').value = '';
             document.getElementById('cameraPreview').className = 'camera-preview';
             document.getElementById('ocrResult').className = 'ocr-result';
             document.getElementById('recognizeBtn').disabled = true;
+            document.getElementById('avatarPreview').style.backgroundImage = '';
+            document.getElementById('avatarPreview').className = 'avatar-preview';
+            document.getElementById('avatarPreview').textContent = '👤';
             currentImage = null;
+            currentAvatar = null;
             document.getElementById('addModal').classList.add('active');
         }
 
@@ -1173,7 +1281,32 @@
             document.getElementById('cardAddress').value = card.address;
             document.getElementById('cardWebsite').value = card.website;
             document.getElementById('cardNotes').value = card.notes;
-            document.getElementById('cameraPreview').className = 'camera-preview';
+            document.getElementById('cardFax').value = card.fax || '';
+            document.getElementById('cardMobile2').value = card.mobile2 || '';
+            document.getElementById('cardImage').value = card.cardImage || '';
+            document.getElementById('cardAvatar').value = card.avatar || '';
+            
+            // 顯示名片圖片
+            if (card.cardImage) {
+                document.getElementById('cameraPreview').src = card.cardImage;
+                document.getElementById('cameraPreview').className = 'camera-preview active';
+                currentImage = card.cardImage;
+            } else {
+                document.getElementById('cameraPreview').className = 'camera-preview';
+            }
+            
+            // 顯示大頭照
+            if (card.avatar) {
+                document.getElementById('avatarPreview').style.backgroundImage = `url('${card.avatar}')`;
+                document.getElementById('avatarPreview').className = 'avatar-preview has-image';
+                document.getElementById('avatarPreview').textContent = '';
+                currentAvatar = card.avatar;
+            } else {
+                document.getElementById('avatarPreview').style.backgroundImage = '';
+                document.getElementById('avatarPreview').className = 'avatar-preview';
+                document.getElementById('avatarPreview').textContent = '👤';
+            }
+
             document.getElementById('ocrResult').className = 'ocr-result';
 
             closeDetailModal();
@@ -1189,10 +1322,15 @@
             const card = cards.find(c => c.id === id);
             if (!card) return;
 
+            const avatarStyle = card.avatar 
+                ? `background-image: url('${card.avatar}'); color: transparent;` 
+                : '';
+
             const content = document.getElementById('detailContent');
             content.innerHTML = `
+                ${card.cardImage ? `<img src="${card.cardImage}" class="detail-card-image" alt="名片">` : ''}
                 <div class="detail-header">
-                    <div class="detail-avatar avatar-${card.category}">${card.name.charAt(0)}</div>
+                    <div class="detail-avatar avatar-${card.category}" style="${avatarStyle}">${card.avatar ? '' : card.name.charAt(0)}</div>
                     <div class="detail-info">
                         <h2>${escapeHtml(card.name)}</h2>
                         <p>${escapeHtml(card.title) || '—'}</p>
@@ -1211,6 +1349,18 @@
                         <span class="detail-row-icon">📱</span>
                         <span class="detail-row-label">電話</span>
                         <span class="detail-row-value"><a href="tel:${card.phone}">${escapeHtml(card.phone)}</a></span>
+                    </div>` : ''}
+                    ${card.mobile2 ? `
+                    <div class="detail-row">
+                        <span class="detail-row-icon">📱</span>
+                        <span class="detail-row-label">手機2</span>
+                        <span class="detail-row-value"><a href="tel:${card.mobile2}">${escapeHtml(card.mobile2)}</a></span>
+                    </div>` : ''}
+                    ${card.fax ? `
+                    <div class="detail-row">
+                        <span class="detail-row-icon">📠</span>
+                        <span class="detail-row-label">傳真</span>
+                        <span class="detail-row-value">${escapeHtml(card.fax)}</span>
                     </div>` : ''}
                     ${card.lineId ? `
                     <div class="detail-row">
@@ -1269,7 +1419,11 @@
                 category: document.getElementById('cardCategory').value,
                 address: document.getElementById('cardAddress').value.trim(),
                 website: document.getElementById('cardWebsite').value.trim(),
-                notes: document.getElementById('cardNotes').value.trim()
+                notes: document.getElementById('cardNotes').value.trim(),
+                fax: document.getElementById('cardFax').value.trim(),
+                mobile2: document.getElementById('cardMobile2').value.trim(),
+                cardImage: currentImage || document.getElementById('cardImage').value,
+                avatar: currentAvatar || document.getElementById('cardAvatar').value
             };
 
             if (!card.name) {
@@ -1297,11 +1451,7 @@
         // ===== 新增到 Google Sheets =====
         async function appendToSheet(card) {
             try {
-                // 由於 API Key 只能讀取，寫入需要 OAuth 或 Apps Script
-                // 這裡提供一個簡單的方式：開啟 Google Sheets 讓用戶手動確認
-                console.log('新名片資料:', card);
-                
-                // 建立要複製的文字
+                // 建立要複製的文字（不含圖片，圖片太大）
                 const rowData = [
                     card.id,
                     card.name,
@@ -1313,7 +1463,9 @@
                     card.category,
                     card.address,
                     card.website,
-                    card.notes
+                    card.notes,
+                    card.fax,
+                    card.mobile2
                 ].join('\t');
 
                 // 複製到剪貼簿
@@ -1336,7 +1488,7 @@
             showNotification('🗑️ 名片已刪除');
         }
 
-        // ===== 拍照處理 =====
+        // ===== 拍照處理（名片）=====
         function handleImageSelect(e) {
             const file = e.target.files[0];
             if (!file) return;
@@ -1348,6 +1500,22 @@
                 preview.src = currentImage;
                 preview.className = 'camera-preview active';
                 document.getElementById('recognizeBtn').disabled = false;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // ===== 大頭照處理 =====
+        function handleAvatarSelect(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                currentAvatar = event.target.result;
+                const preview = document.getElementById('avatarPreview');
+                preview.style.backgroundImage = `url('${currentAvatar}')`;
+                preview.className = 'avatar-preview has-image';
+                preview.textContent = '';
             };
             reader.readAsDataURL(file);
         }
@@ -1385,7 +1553,7 @@
 
                     // 智慧解析名片
                     parseBusinessCard(text);
-                    showNotification('✅ 辨識完成！');
+                    showNotification('✅ 辨識完成！已自動填入欄位');
                 } else {
                     showNotification('無法辨識文字，請重新拍照', true);
                 }
@@ -1396,12 +1564,13 @@
             }
 
             btn.disabled = false;
-            btn.innerHTML = '🔍 辨識名片';
+            btn.innerHTML = '🔍 辨識文字';
         }
 
-        // ===== 智慧解析名片 =====
+        // ===== 智慧解析名片（加強版）=====
         function parseBusinessCard(text) {
             const lines = text.split('\n').map(l => l.trim()).filter(l => l);
+            const fullText = text.toLowerCase();
 
             // Email
             const emailMatch = text.match(/[\w.-]+@[\w.-]+\.\w+/);
@@ -1409,28 +1578,113 @@
                 document.getElementById('cardEmail').value = emailMatch[0];
             }
 
-            // 電話 (台灣格式)
-            const phoneMatch = text.match(/(?:0\d{1,2}[-\s]?\d{3,4}[-\s]?\d{3,4})|(?:\+?886[-\s]?\d{1,2}[-\s]?\d{3,4}[-\s]?\d{3,4})|(?:09\d{2}[-\s]?\d{3}[-\s]?\d{3})/);
-            if (phoneMatch) {
-                document.getElementById('cardPhone').value = phoneMatch[0];
+            // 電話 (台灣格式) - 改進版
+            const phonePatterns = [
+                /09\d{2}[-\s]?\d{3}[-\s]?\d{3}/g,  // 手機
+                /0\d{1,2}[-\s]?\d{3,4}[-\s]?\d{3,4}/g,  // 市話
+                /\+?886[-\s]?\d{1,2}[-\s]?\d{3,4}[-\s]?\d{3,4}/g,  // 國際格式
+                /\(\d{2,3}\)[-\s]?\d{3,4}[-\s]?\d{3,4}/g  // (02)xxxx-xxxx 格式
+            ];
+            
+            let phones = [];
+            for (const pattern of phonePatterns) {
+                const matches = text.match(pattern);
+                if (matches) {
+                    phones = phones.concat(matches);
+                }
+            }
+            
+            // 去除重複並分配
+            phones = [...new Set(phones)];
+            if (phones.length > 0) {
+                document.getElementById('cardPhone').value = phones[0];
+            }
+            if (phones.length > 1) {
+                document.getElementById('cardMobile2').value = phones[1];
             }
 
-            // LINE ID (常見格式)
-            const lineMatch = text.match(/(?:LINE|Line|line)[\s:：]*([\w._-]+)/i);
-            if (lineMatch) {
-                document.getElementById('cardLine').value = lineMatch[1];
+            // 傳真
+            const faxMatch = text.match(/(?:傳真|FAX|Fax|F)[:\s]*([0-9\-\s()]+)/i);
+            if (faxMatch) {
+                document.getElementById('cardFax').value = faxMatch[1].trim();
+            }
+
+            // LINE ID (多種格式)
+            const linePatterns = [
+                /(?:LINE|Line|line)[\s:：ID]*[:\s]*([\w._-]+)/i,
+                /(?:LINE|Line|line)\s*(?:ID)?[\s:：]*([\w._-]+)/i,
+                /ID[\s:：]*([\w._-]+)/i
+            ];
+            for (const pattern of linePatterns) {
+                const match = text.match(pattern);
+                if (match && match[1] && match[1].length > 2) {
+                    document.getElementById('cardLine').value = match[1];
+                    break;
+                }
             }
 
             // 網站
-            const websiteMatch = text.match(/(?:www\.[\w.-]+\.\w+)|(?:https?:\/\/[\w.-]+\.\w+)/i);
+            const websiteMatch = text.match(/(?:www\.[\w.-]+\.\w+[\w./]*)|(?:https?:\/\/[\w.-]+\.\w+[\w./]*)/i);
             if (websiteMatch) {
                 document.getElementById('cardWebsite').value = websiteMatch[0];
             }
 
-            // 嘗試找出姓名 (通常是第一行或包含中文字的短行)
+            // ===== 公司名稱（大幅加強）=====
+            const companyKeywords = [
+                '公司', '企業', '有限', '股份', '集團', '工作室', '事務所',
+                '診所', '醫院', '藥局', '銀行', '保險', '證券', '基金',
+                '學院', '大學', '學校', '中心', '協會', '基金會', '商行',
+                '工廠', '實業', '國際', '貿易', '科技', '資訊', '顧問',
+                '設計', '廣告', '行銷', '建設', '營造', '開發', '投資',
+                'Co.', 'Corp', 'Inc', 'Ltd', 'LLC', 'Company', 'Group',
+                'Studio', 'Design', 'Tech', 'International'
+            ];
+            
             for (const line of lines) {
+                for (const keyword of companyKeywords) {
+                    if (line.includes(keyword)) {
+                        document.getElementById('cardCompany').value = line;
+                        break;
+                    }
+                }
+                if (document.getElementById('cardCompany').value) break;
+            }
+
+            // ===== 職稱（加強）=====
+            const titleKeywords = [
+                '經理', '總監', '主管', '專員', '業務', '工程師', '設計師',
+                '總裁', '執行長', '董事', '總經理', '副總', '協理', '襄理',
+                '課長', '組長', '店長', '廠長', '技術員', '技師', '師',
+                '會計', '財務', '人資', '行政', '秘書', '助理', '顧問',
+                '律師', '醫師', '藥師', '建築師', '會計師', '記帳士',
+                'Director', 'Manager', 'CEO', 'CTO', 'CFO', 'COO',
+                'Engineer', 'Designer', 'Developer', 'Consultant',
+                'VP', 'President', 'Supervisor', 'Specialist', 'Officer'
+            ];
+            
+            for (const line of lines) {
+                for (const keyword of titleKeywords) {
+                    if (line.includes(keyword)) {
+                        // 排除已經是公司名稱的行
+                        if (line !== document.getElementById('cardCompany').value) {
+                            document.getElementById('cardTitle').value = line;
+                            break;
+                        }
+                    }
+                }
+                if (document.getElementById('cardTitle').value) break;
+            }
+
+            // ===== 姓名（改進）=====
+            // 優先找中文姓名（2-4個字的純中文行）
+            for (const line of lines) {
+                // 跳過已使用的行
+                if (line === document.getElementById('cardCompany').value) continue;
+                if (line === document.getElementById('cardTitle').value) continue;
                 // 跳過包含特殊符號的行
                 if (line.includes('@') || line.includes('www') || line.match(/\d{4,}/)) continue;
+                if (line.includes('公司') || line.includes('有限') || line.includes('股份')) continue;
+                
                 // 中文姓名通常 2-4 個字
                 if (/^[\u4e00-\u9fa5]{2,4}$/.test(line)) {
                     document.getElementById('cardName').value = line;
@@ -1438,36 +1692,44 @@
                 }
             }
 
-            // 嘗試找公司名稱 (包含「公司」「企業」「有限」等)
-            const companyLine = lines.find(l => 
-                l.includes('公司') || l.includes('企業') || l.includes('有限') || 
-                l.includes('股份') || l.includes('集團') || l.includes('工作室') ||
-                l.includes('Co.') || l.includes('Corp') || l.includes('Inc') || l.includes('Ltd')
-            );
-            if (companyLine) {
-                document.getElementById('cardCompany').value = companyLine;
+            // 如果沒找到純中文名，找包含中文的短行
+            if (!document.getElementById('cardName').value) {
+                for (const line of lines) {
+                    if (line === document.getElementById('cardCompany').value) continue;
+                    if (line === document.getElementById('cardTitle').value) continue;
+                    if (line.includes('@') || line.includes('www') || line.match(/\d{4,}/)) continue;
+                    
+                    // 包含中文且長度較短
+                    if (/[\u4e00-\u9fa5]{2,}/.test(line) && line.length <= 10) {
+                        document.getElementById('cardName').value = line;
+                        break;
+                    }
+                }
             }
 
-            // 嘗試找職稱 (包含「經理」「總監」「主管」等)
-            const titleLine = lines.find(l => 
-                l.includes('經理') || l.includes('總監') || l.includes('主管') ||
-                l.includes('專員') || l.includes('業務') || l.includes('工程師') ||
-                l.includes('設計師') || l.includes('總裁') || l.includes('執行長') ||
-                l.includes('Director') || l.includes('Manager') || l.includes('CEO') ||
-                l.includes('Engineer') || l.includes('Designer')
-            );
-            if (titleLine) {
-                document.getElementById('cardTitle').value = titleLine;
+            // ===== 地址（改進）=====
+            const addressKeywords = ['市', '縣', '區', '鄉', '鎮', '路', '街', '巷', '弄', '號', '樓', 'F'];
+            for (const line of lines) {
+                let matchCount = 0;
+                for (const keyword of addressKeywords) {
+                    if (line.includes(keyword)) matchCount++;
+                }
+                // 如果符合3個以上關鍵字，很可能是地址
+                if (matchCount >= 3) {
+                    document.getElementById('cardAddress').value = line;
+                    break;
+                }
             }
 
-            // 地址 (包含「市」「區」「路」「街」等)
-            const addressLine = lines.find(l => 
-                (l.includes('市') || l.includes('縣')) && 
-                (l.includes('區') || l.includes('鄉') || l.includes('鎮')) &&
-                (l.includes('路') || l.includes('街') || l.includes('巷'))
-            );
-            if (addressLine) {
-                document.getElementById('cardAddress').value = addressLine;
+            // 如果沒找到完整地址，找包含「市」和「區」的行
+            if (!document.getElementById('cardAddress').value) {
+                for (const line of lines) {
+                    if ((line.includes('市') || line.includes('縣')) && 
+                        (line.includes('區') || line.includes('鄉') || line.includes('鎮'))) {
+                        document.getElementById('cardAddress').value = line;
+                        break;
+                    }
+                }
             }
         }
 
