@@ -7,7 +7,6 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#0f172a">
     <title>名片管理中心</title>
-    <link rel="manifest" href="data:application/json,{'name':'名片管理','short_name':'名片','start_url':'.','display':'standalone','background_color':'%230f172a','theme_color':'%230f172a'}">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -21,6 +20,7 @@
             --text-muted: #64748b;
             --border: rgba(255,255,255,0.1);
             --danger: #ef4444;
+            --success: #22c55e;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -127,6 +127,11 @@
             padding: 8px;
             min-width: 36px;
             justify-content: center;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
 
         .search-section {
@@ -611,7 +616,7 @@
         .detail-row:last-child { border-bottom: none; }
         .detail-row-icon { font-size: 14px; margin-right: 8px; }
         .detail-row-label { width: 55px; font-size: 11px; color: var(--text-muted); }
-        .detail-row-value { flex: 1; font-size: 13px; }
+        .detail-row-value { flex: 1; font-size: 13px; word-break: break-all; }
         .detail-row-value a { color: var(--text-primary); text-decoration: none; }
         .detail-row-value a:hover { color: var(--primary); }
         .detail-row-value.line { color: var(--primary); font-weight: 500; }
@@ -638,10 +643,13 @@
             z-index: 300;
             transition: transform 0.3s;
             font-size: 13px;
+            max-width: 90%;
+            text-align: center;
         }
 
         .notification.active { transform: translateX(-50%) translateY(0); }
         .notification.error { background: var(--danger); }
+        .notification.success { background: var(--success); }
 
         .loading {
             display: inline-block;
@@ -656,12 +664,30 @@
         @keyframes spin { to { transform: rotate(360deg); } }
 
         .sync-status { font-size: 10px; color: var(--text-muted); display: flex; align-items: center; gap: 4px; }
-        .sync-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--primary); }
-        .sync-dot.syncing { animation: pulse 1s infinite; }
+        .sync-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-muted); }
+        .sync-dot.online { background: var(--success); }
+        .sync-dot.syncing { background: var(--accent); animation: pulse 1s infinite; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
         /* 隱藏的 input */
         .hidden-input { display: none; }
+
+        /* 載入遮罩 */
+        .loading-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(15, 23, 42, 0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 16px;
+            z-index: 400;
+        }
+
+        .loading-overlay.active { display: flex; }
+        .loading-overlay .loading { width: 40px; height: 40px; border-width: 3px; }
+        .loading-overlay p { color: var(--text-secondary); font-size: 14px; }
 
         @media (max-width: 480px) {
             .header-top { flex-wrap: wrap; }
@@ -674,6 +700,10 @@
 </head>
 <body>
     <div id="notification" class="notification"></div>
+    <div id="loadingOverlay" class="loading-overlay">
+        <span class="loading"></span>
+        <p id="loadingText">載入中...</p>
+    </div>
 
     <!-- 隱藏的 file inputs -->
     <input type="file" id="cardFrontCameraInput" class="hidden-input" accept="image/*" capture="environment">
@@ -689,16 +719,16 @@
                 <div class="logo-icon">📇</div>
                 <div class="logo-text">
                     <h1>名片管理中心</h1>
-                    <p>📷 拍照辨識 · 💬 LINE 整合</p>
+                    <p>☁️ 雲端同步版</p>
                 </div>
             </div>
             <div class="header-actions">
                 <div class="sync-status">
                     <span class="sync-dot" id="syncDot"></span>
-                    <span id="syncText">本地</span>
+                    <span id="syncText">離線</span>
                 </div>
                 <button class="btn btn-secondary btn-icon" onclick="reloadApp()" title="重新整理">🔄</button>
-                <button class="btn btn-secondary btn-icon" onclick="syncFromSheet()" title="雲端同步">☁️</button>
+                <button class="btn btn-secondary btn-icon" onclick="syncFromCloud()" title="雲端同步">☁️</button>
                 <button class="btn btn-primary" onclick="openAddModal()">➕ 新增</button>
             </div>
         </div>
@@ -740,11 +770,11 @@
             <div class="image-section">
                 <div class="image-section-title">📸 名片照片</div>
                 <div class="image-row">
-                    <div class="image-box" id="cardFrontBox" onclick="showImageOptions('front')">
+                    <div class="image-box" id="cardFrontBox">
                         <span class="image-box-icon">📄</span>
                         <span class="image-box-label">正面</span>
                     </div>
-                    <div class="image-box" id="cardBackBox" onclick="showImageOptions('back')">
+                    <div class="image-box" id="cardBackBox">
                         <span class="image-box-icon">📄</span>
                         <span class="image-box-label">背面</span>
                     </div>
@@ -766,7 +796,7 @@
 
             <!-- 大頭照區 -->
             <div class="avatar-section">
-                <div class="avatar-preview" id="avatarPreview" onclick="showAvatarOptions()">👤</div>
+                <div class="avatar-preview" id="avatarPreview">👤</div>
                 <div class="avatar-info">
                     <h4>📸 大頭照</h4>
                     <p>上傳聯絡人照片</p>
@@ -837,7 +867,7 @@
             </div>
             <div class="form-actions">
                 <button type="button" class="btn btn-secondary" onclick="closeAddModal()">取消</button>
-                <button type="button" class="btn btn-primary" onclick="saveCard()">💾 儲存</button>
+                <button type="button" class="btn btn-primary" id="saveBtn" onclick="saveCard()">💾 儲存</button>
             </div>
         </div>
     </div>
@@ -854,33 +884,43 @@
     </div>
 
     <script>
-        // ===== 設定 =====
-        const CONFIG = {
-            VISION_API_KEY: 'AIzaSyDLVs8BwB5Uy0EWl0HSjAwXKxVml1bAv_Y',
-            SHEET_ID: '1WcV71Rh8T5uxgce-Nuh5XuO8Fn1Mn1GGLp8cYpmY1oo'
-        };
+        // ===== API 設定 =====
+        const API_URL = 'https://script.google.com/macros/s/AKfycbxsDT1GpMUWkLTh8HQIB6QMVOM6aMXS2IvBy1hpWy_y5mgyOakb__p0XQm1cn2q6N0LVQ/exec';
 
         const CATEGORIES = ['全部', '客戶', '供應商', '合作夥伴', '同事', '朋友', '其他'];
 
         // ===== 全域變數 =====
         let cards = [];
         let currentCategory = '全部';
-        let cardFrontImage = null;
-        let cardBackImage = null;
-        let avatarImage = null;
+        let cardFrontImage = null;  // base64
+        let cardBackImage = null;   // base64
+        let avatarImage = null;     // base64
+        let cardFrontUrl = '';      // Drive URL
+        let cardBackUrl = '';       // Drive URL
+        let avatarUrl = '';         // Drive URL
         let editingId = null;
 
         // ===== 初始化 =====
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('App 初始化 v4...');
+            console.log('App v5 初始化...');
             initCategories();
             initFileInputs();
             loadFromLocal();
             renderCards();
-            setTimeout(syncFromSheet, 500);
+            syncFromCloud();
         });
 
-        // ===== Reload 功能 =====
+        // ===== 顯示/隱藏載入中 =====
+        function showLoading(text) {
+            document.getElementById('loadingText').textContent = text || '載入中...';
+            document.getElementById('loadingOverlay').classList.add('active');
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingOverlay').classList.remove('active');
+        }
+
+        // ===== Reload =====
         function reloadApp() {
             showNotification('🔄 重新整理中...');
             setTimeout(function() {
@@ -890,7 +930,7 @@
 
         // ===== 初始化分類 =====
         function initCategories() {
-            const container = document.getElementById('categories');
+            var container = document.getElementById('categories');
             container.innerHTML = CATEGORIES.map(function(cat) {
                 return '<button class="category-btn ' + (cat === '全部' ? 'active' : '') + '" data-cat="' + cat + '" onclick="selectCategory(this)">' + cat + '</button>';
             }).join('');
@@ -898,65 +938,66 @@
 
         // ===== 初始化檔案輸入 =====
         function initFileInputs() {
-            // 名片正面
-            document.getElementById('cardFrontCameraInput').addEventListener('change', function(e) {
-                handleCardImage(e, 'front');
-            });
-            document.getElementById('cardFrontGalleryInput').addEventListener('change', function(e) {
-                handleCardImage(e, 'front');
-            });
-
-            // 名片背面
-            document.getElementById('cardBackCameraInput').addEventListener('change', function(e) {
-                handleCardImage(e, 'back');
-            });
-            document.getElementById('cardBackGalleryInput').addEventListener('change', function(e) {
-                handleCardImage(e, 'back');
-            });
-
-            // 大頭照
+            document.getElementById('cardFrontCameraInput').addEventListener('change', function(e) { handleCardImage(e, 'front'); });
+            document.getElementById('cardFrontGalleryInput').addEventListener('change', function(e) { handleCardImage(e, 'front'); });
+            document.getElementById('cardBackCameraInput').addEventListener('change', function(e) { handleCardImage(e, 'back'); });
+            document.getElementById('cardBackGalleryInput').addEventListener('change', function(e) { handleCardImage(e, 'back'); });
             document.getElementById('avatarCameraInput').addEventListener('change', handleAvatarImage);
             document.getElementById('avatarGalleryInput').addEventListener('change', handleAvatarImage);
         }
 
-        function handleCardImage(e, side) {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(evt) {
-                const imageData = evt.target.result;
-                const box = document.getElementById(side === 'front' ? 'cardFrontBox' : 'cardBackBox');
-                
-                if (side === 'front') {
-                    cardFrontImage = imageData;
-                    document.getElementById('recognizeBtn').disabled = false;
-                } else {
-                    cardBackImage = imageData;
-                }
-
-                box.innerHTML = '<img src="' + imageData + '" alt="名片' + (side === 'front' ? '正面' : '背面') + '">';
-                box.classList.add('has-image');
+        // ===== 壓縮圖片 =====
+        function compressImage(file, maxWidth, quality, callback) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                var img = new Image();
+                img.onload = function() {
+                    var canvas = document.createElement('canvas');
+                    var ratio = Math.min(maxWidth / img.width, maxWidth / img.height, 1);
+                    canvas.width = img.width * ratio;
+                    canvas.height = img.height * ratio;
+                    var ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    var dataUrl = canvas.toDataURL('image/jpeg', quality);
+                    callback(dataUrl);
+                };
+                img.src = e.target.result;
             };
             reader.readAsDataURL(file);
+        }
+
+        function handleCardImage(e, side) {
+            var file = e.target.files[0];
+            if (!file) return;
+
+            compressImage(file, 1200, 0.8, function(dataUrl) {
+                var box = document.getElementById(side === 'front' ? 'cardFrontBox' : 'cardBackBox');
+                
+                if (side === 'front') {
+                    cardFrontImage = dataUrl;
+                    document.getElementById('recognizeBtn').disabled = false;
+                } else {
+                    cardBackImage = dataUrl;
+                }
+
+                box.innerHTML = '<img src="' + dataUrl + '" alt="名片">';
+                box.classList.add('has-image');
+            });
         }
 
         function handleAvatarImage(e) {
-            const file = e.target.files[0];
+            var file = e.target.files[0];
             if (!file) return;
 
-            const reader = new FileReader();
-            reader.onload = function(evt) {
-                avatarImage = evt.target.result;
-                const preview = document.getElementById('avatarPreview');
-                preview.style.backgroundImage = 'url("' + avatarImage + '")';
+            compressImage(file, 400, 0.8, function(dataUrl) {
+                avatarImage = dataUrl;
+                var preview = document.getElementById('avatarPreview');
+                preview.style.backgroundImage = 'url("' + dataUrl + '")';
                 preview.classList.add('has-image');
                 preview.textContent = '';
-            };
-            reader.readAsDataURL(file);
+            });
         }
 
-        // ===== 拍照/選擇圖片 =====
         function captureCard(side) {
             document.getElementById(side === 'front' ? 'cardFrontCameraInput' : 'cardBackCameraInput').click();
         }
@@ -974,20 +1015,22 @@
         }
 
         // ===== 通知 =====
-        function showNotification(msg, isError) {
-            const el = document.getElementById('notification');
+        function showNotification(msg, type) {
+            var el = document.getElementById('notification');
             el.textContent = msg;
-            el.className = 'notification active' + (isError ? ' error' : '');
+            el.className = 'notification active';
+            if (type === 'error') el.classList.add('error');
+            if (type === 'success') el.classList.add('success');
             setTimeout(function() { el.className = 'notification'; }, 3000);
         }
 
-        // ===== 本地儲存 =====
+        // ===== 本地儲存（備份用）=====
         function loadFromLocal() {
             try {
-                const saved = localStorage.getItem('businessCards_v4');
+                var saved = localStorage.getItem('businessCards_v5');
                 if (saved) {
                     cards = JSON.parse(saved);
-                    console.log('載入本地資料:', cards.length, '筆');
+                    console.log('本地資料:', cards.length, '筆');
                 }
             } catch (e) {
                 console.error('載入失敗:', e);
@@ -997,106 +1040,137 @@
 
         function saveToLocal() {
             try {
-                localStorage.setItem('businessCards_v4', JSON.stringify(cards));
-                console.log('已儲存:', cards.length, '筆');
+                // 儲存時不包含 base64 圖片（只存 URL）
+                var dataToSave = cards.map(function(c) {
+                    return {
+                        id: c.id,
+                        name: c.name,
+                        nameEn: c.nameEn,
+                        company: c.company,
+                        title: c.title,
+                        phone: c.phone,
+                        email: c.email,
+                        lineId: c.lineId,
+                        category: c.category,
+                        address: c.address,
+                        website: c.website,
+                        notes: c.notes,
+                        cardFrontUrl: c.cardFrontUrl || '',
+                        cardBackUrl: c.cardBackUrl || '',
+                        avatarUrl: c.avatarUrl || ''
+                    };
+                });
+                localStorage.setItem('businessCards_v5', JSON.stringify(dataToSave));
             } catch (e) {
                 console.error('儲存失敗:', e);
-                showNotification('儲存失敗，可能空間不足', true);
             }
         }
 
-        // ===== Google Sheets 同步（使用 JSONP 方式繞過 CORS）=====
-        async function syncFromSheet() {
-            const dot = document.getElementById('syncDot');
-            const text = document.getElementById('syncText');
-            dot.classList.add('syncing');
+        // ===== 雲端 API 呼叫 =====
+        async function apiCall(action, data) {
+            var body = Object.assign({ action: action }, data);
+            
+            var response = await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain' },
+                body: JSON.stringify(body)
+            });
+            
+            return await response.json();
+        }
+
+        async function apiGet() {
+            var response = await fetch(API_URL);
+            return await response.json();
+        }
+
+        // ===== 雲端同步 =====
+        async function syncFromCloud() {
+            var dot = document.getElementById('syncDot');
+            var text = document.getElementById('syncText');
+            dot.className = 'sync-dot syncing';
             text.textContent = '同步中...';
 
             try {
-                // 使用 Google Visualization API（支援 JSONP，無 CORS 問題）
-                const query = encodeURIComponent('SELECT *');
-                const url = 'https://docs.google.com/spreadsheets/d/' + CONFIG.SHEET_ID + '/gviz/tq?tq=' + query;
-                
-                const res = await fetch(url);
-                const textData = await res.text();
-                
-                // 解析 Google Visualization 回應
-                const jsonMatch = textData.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\);?$/);
-                if (!jsonMatch) {
-                    throw new Error('無法解析回應');
-                }
-                
-                const data = JSON.parse(jsonMatch[1]);
-                
-                if (data.table && data.table.rows) {
-                    const cols = data.table.cols;
-                    const rows = data.table.rows;
-                    
-                    const newCards = rows.map(function(row, i) {
-                        const getValue = function(idx) {
-                            return row.c[idx] && row.c[idx].v ? String(row.c[idx].v) : '';
-                        };
-                        
-                        return {
-                            id: getValue(0) || String(Date.now() + i),
-                            name: getValue(1),
-                            nameEn: getValue(2),
-                            company: getValue(3),
-                            title: getValue(4),
-                            phone: getValue(5),
-                            email: getValue(6),
-                            lineId: getValue(7),
-                            category: getValue(8) || '其他',
-                            address: getValue(9),
-                            website: getValue(10),
-                            notes: getValue(11),
-                            cardFront: '',
-                            cardBack: '',
-                            avatar: ''
-                        };
-                    }).filter(function(c) { return c.name; });
+                var result = await apiGet();
+                console.log('雲端資料:', result);
 
-                    if (newCards.length > 0) {
-                        // 合併圖片資料（保留本地圖片）
-                        newCards.forEach(function(newCard) {
-                            const existing = cards.find(function(c) { return c.id === newCard.id || c.name === newCard.name; });
-                            if (existing) {
-                                newCard.cardFront = existing.cardFront || '';
-                                newCard.cardBack = existing.cardBack || '';
-                                newCard.avatar = existing.avatar || '';
-                            }
-                        });
-                        
-                        cards = newCards;
-                        saveToLocal();
-                        renderCards();
-                        showNotification('✅ 同步成功！' + newCards.length + ' 筆');
-                    } else {
-                        showNotification('試算表沒有資料');
-                    }
+                if (result.success && result.data) {
+                    cards = result.data.map(function(row) {
+                        return {
+                            id: row['ID'] || String(Date.now()),
+                            name: row['姓名'] || '',
+                            nameEn: row['英文名'] || '',
+                            company: row['公司'] || '',
+                            title: row['職稱'] || '',
+                            phone: row['電話'] || '',
+                            email: row['Email'] || '',
+                            lineId: row['LINE_ID'] || '',
+                            category: row['分類'] || '其他',
+                            address: row['地址'] || '',
+                            website: row['網站'] || '',
+                            notes: row['備註'] || '',
+                            cardFrontUrl: row['名片正面'] || '',
+                            cardBackUrl: row['名片背面'] || '',
+                            avatarUrl: row['大頭照'] || ''
+                        };
+                    });
+
+                    saveToLocal();
+                    renderCards();
+                    showNotification('✅ 同步成功！' + cards.length + ' 筆', 'success');
+                    dot.className = 'sync-dot online';
+                    text.textContent = '已連線';
+                } else {
+                    throw new Error(result.error || '同步失敗');
                 }
             } catch (err) {
                 console.error('同步錯誤:', err);
-                showNotification('同步失敗: ' + err.message, true);
+                showNotification('同步失敗: ' + err.message, 'error');
+                dot.className = 'sync-dot';
+                text.textContent = '離線';
             }
+        }
 
-            dot.classList.remove('syncing');
-            text.textContent = '本地';
+        // ===== 上傳圖片到 Google Drive =====
+        async function uploadImageToDrive(base64Data, fileName) {
+            if (!base64Data) return '';
+            
+            try {
+                var base64Content = base64Data.split(',')[1];
+                var mimeType = base64Data.match(/data:(.*?);/)[1];
+                
+                var result = await apiCall('uploadImage', {
+                    fileName: fileName,
+                    base64Data: base64Content,
+                    mimeType: mimeType
+                });
+                
+                if (result.success) {
+                    return result.url;
+                } else {
+                    console.error('上傳失敗:', result.error);
+                    return '';
+                }
+            } catch (err) {
+                console.error('上傳錯誤:', err);
+                return '';
+            }
         }
 
         // ===== 渲染名片 =====
         function renderCards() {
-            const grid = document.getElementById('cardsGrid');
-            const search = document.getElementById('searchInput').value.toLowerCase();
+            var grid = document.getElementById('cardsGrid');
+            var search = document.getElementById('searchInput').value.toLowerCase();
             
-            const filtered = cards.filter(function(card) {
-                const matchSearch = !search || 
+            var filtered = cards.filter(function(card) {
+                var matchSearch = !search || 
                     (card.name && card.name.toLowerCase().includes(search)) ||
                     (card.nameEn && card.nameEn.toLowerCase().includes(search)) ||
                     (card.company && card.company.toLowerCase().includes(search)) ||
                     (card.lineId && card.lineId.toLowerCase().includes(search)) ||
                     (card.notes && card.notes.toLowerCase().includes(search));
-                const matchCat = currentCategory === '全部' || card.category === currentCategory;
+                var matchCat = currentCategory === '全部' || card.category === currentCategory;
                 return matchSearch && matchCat;
             });
 
@@ -1106,18 +1180,18 @@
 
             if (filtered.length === 0) {
                 grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;"><div class="empty-state-icon">📭</div><h3>' + 
-                    (cards.length === 0 ? '還沒有名片' : '找不到符合的名片') + '</h3></div>';
+                    (cards.length === 0 ? '還沒有名片，點擊「新增」開始' : '找不到符合的名片') + '</h3></div>';
                 return;
             }
 
             grid.innerHTML = filtered.map(function(card) {
-                const avatarStyle = card.avatar ? 'background-image:url("' + card.avatar + '");color:transparent;' : '';
-                const hasImages = card.cardFront || card.cardBack;
+                var avatarStyle = card.avatarUrl ? 'background-image:url("' + card.avatarUrl + '");color:transparent;' : '';
+                var hasImages = card.cardFrontUrl || card.cardBackUrl;
                 
                 return '<div class="card" onclick="openDetailModal(\'' + card.id + '\')">' +
                     '<span class="card-category cat-' + (card.category || '其他') + '">' + (card.category || '其他') + '</span>' +
                     '<div class="card-header">' +
-                        '<div class="card-avatar avatar-' + (card.category || '其他') + '" style="' + avatarStyle + '">' + (card.avatar ? '' : (card.name ? card.name.charAt(0) : '?')) + '</div>' +
+                        '<div class="card-avatar avatar-' + (card.category || '其他') + '" style="' + avatarStyle + '">' + (card.avatarUrl ? '' : (card.name ? card.name.charAt(0) : '?')) + '</div>' +
                         '<div>' +
                             '<div class="card-name">' + escapeHtml(card.name) + '</div>' +
                             (card.nameEn ? '<div class="card-name-en">' + escapeHtml(card.nameEn) + '</div>' : '') +
@@ -1130,8 +1204,8 @@
                         (card.lineId ? '<div class="card-contact card-line">💬 ' + escapeHtml(card.lineId) + '</div>' : '') +
                     '</div>' +
                     (hasImages ? '<div class="card-images">' +
-                        (card.cardFront ? '<div class="card-image-thumb" style="background-image:url(\'' + card.cardFront + '\')"></div>' : '') +
-                        (card.cardBack ? '<div class="card-image-thumb" style="background-image:url(\'' + card.cardBack + '\')"></div>' : '') +
+                        (card.cardFrontUrl ? '<div class="card-image-thumb" style="background-image:url(\'' + card.cardFrontUrl + '\')"></div>' : '') +
+                        (card.cardBackUrl ? '<div class="card-image-thumb" style="background-image:url(\'' + card.cardBackUrl + '\')"></div>' : '') +
                     '</div>' : '') +
                 '</div>';
             }).join('');
@@ -1146,7 +1220,7 @@
             renderCards();
         }
 
-        // ===== Modal 操作 =====
+        // ===== Modal =====
         function openAddModal() {
             editingId = null;
             document.getElementById('modalTitle').textContent = '➕ 新增名片';
@@ -1173,10 +1247,12 @@
             document.getElementById('cardWebsite').value = '';
             document.getElementById('cardNotes').value = '';
             
-            // 重設圖片
             cardFrontImage = null;
             cardBackImage = null;
             avatarImage = null;
+            cardFrontUrl = '';
+            cardBackUrl = '';
+            avatarUrl = '';
             
             document.getElementById('cardFrontBox').innerHTML = '<span class="image-box-icon">📄</span><span class="image-box-label">正面</span>';
             document.getElementById('cardFrontBox').classList.remove('has-image');
@@ -1190,86 +1266,93 @@
         }
 
         // ===== 儲存名片 =====
-        function saveCard() {
-            const name = document.getElementById('cardName').value.trim();
+        async function saveCard() {
+            var name = document.getElementById('cardName').value.trim();
             if (!name) {
-                showNotification('請輸入姓名', true);
+                showNotification('請輸入姓名', 'error');
                 return;
             }
 
-            const card = {
-                id: editingId || String(Date.now()),
-                name: name,
-                nameEn: document.getElementById('cardNameEn').value.trim(),
-                company: document.getElementById('cardCompany').value.trim(),
-                title: document.getElementById('cardTitle').value.trim(),
-                phone: document.getElementById('cardPhone').value.trim(),
-                email: document.getElementById('cardEmail').value.trim(),
-                lineId: document.getElementById('cardLine').value.trim(),
-                category: document.getElementById('cardCategory').value,
-                address: document.getElementById('cardAddress').value.trim(),
-                website: document.getElementById('cardWebsite').value.trim(),
-                notes: document.getElementById('cardNotes').value.trim(),
-                cardFront: cardFrontImage || '',
-                cardBack: cardBackImage || '',
-                avatar: avatarImage || ''
-            };
+            var saveBtn = document.getElementById('saveBtn');
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<span class="loading"></span>';
+            showLoading('儲存中...');
 
-            console.log('儲存名片:', card.name);
+            try {
+                // 上傳圖片到 Google Drive
+                var uploadedFrontUrl = cardFrontUrl;
+                var uploadedBackUrl = cardBackUrl;
+                var uploadedAvatarUrl = avatarUrl;
 
-            if (editingId) {
-                const idx = cards.findIndex(function(c) { return c.id === editingId; });
-                if (idx !== -1) {
-                    // 保留原有圖片（如果沒有新上傳）
-                    if (!cardFrontImage && cards[idx].cardFront) card.cardFront = cards[idx].cardFront;
-                    if (!cardBackImage && cards[idx].cardBack) card.cardBack = cards[idx].cardBack;
-                    if (!avatarImage && cards[idx].avatar) card.avatar = cards[idx].avatar;
-                    cards[idx] = card;
+                if (cardFrontImage && !cardFrontUrl) {
+                    showLoading('上傳名片正面...');
+                    uploadedFrontUrl = await uploadImageToDrive(cardFrontImage, 'card_front_' + Date.now() + '.jpg');
                 }
-                showNotification('✅ 已更新！');
-            } else {
-                cards.unshift(card);
-                showNotification('✅ 已新增！');
+                if (cardBackImage && !cardBackUrl) {
+                    showLoading('上傳名片背面...');
+                    uploadedBackUrl = await uploadImageToDrive(cardBackImage, 'card_back_' + Date.now() + '.jpg');
+                }
+                if (avatarImage && !avatarUrl) {
+                    showLoading('上傳大頭照...');
+                    uploadedAvatarUrl = await uploadImageToDrive(avatarImage, 'avatar_' + Date.now() + '.jpg');
+                }
+
+                var cardData = {
+                    'ID': editingId || String(Date.now()),
+                    '姓名': name,
+                    '英文名': document.getElementById('cardNameEn').value.trim(),
+                    '公司': document.getElementById('cardCompany').value.trim(),
+                    '職稱': document.getElementById('cardTitle').value.trim(),
+                    '電話': document.getElementById('cardPhone').value.trim(),
+                    'Email': document.getElementById('cardEmail').value.trim(),
+                    'LINE_ID': document.getElementById('cardLine').value.trim(),
+                    '分類': document.getElementById('cardCategory').value,
+                    '地址': document.getElementById('cardAddress').value.trim(),
+                    '網站': document.getElementById('cardWebsite').value.trim(),
+                    '備註': document.getElementById('cardNotes').value.trim(),
+                    '名片正面': uploadedFrontUrl,
+                    '名片背面': uploadedBackUrl,
+                    '大頭照': uploadedAvatarUrl
+                };
+
+                showLoading('儲存到雲端...');
+                
+                var action = editingId ? 'update' : 'add';
+                var result = await apiCall(action, { card: cardData });
+
+                if (result.success) {
+                    showNotification('✅ ' + result.message, 'success');
+                    closeAddModal();
+                    await syncFromCloud();
+                } else {
+                    throw new Error(result.error || '儲存失敗');
+                }
+            } catch (err) {
+                console.error('儲存錯誤:', err);
+                showNotification('儲存失敗: ' + err.message, 'error');
             }
 
-            saveToLocal();
-            renderCards();
-            closeAddModal();
-
-            // 複製到剪貼簿（方便手動貼到 Google Sheets）
-            copyToClipboard(card);
-        }
-
-        function copyToClipboard(card) {
-            const data = [
-                card.id, card.name, card.nameEn, card.company, card.title, 
-                card.phone, card.email, card.lineId, card.category, 
-                card.address, card.website, card.notes
-            ].join('\t');
-            
-            navigator.clipboard.writeText(data).then(function() {
-                console.log('已複製到剪貼簿');
-            }).catch(function(e) {
-                console.log('複製失敗:', e);
-            });
+            hideLoading();
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = '💾 儲存';
         }
 
         // ===== 詳細頁 =====
         function openDetailModal(id) {
-            const card = cards.find(function(c) { return c.id === id; });
+            var card = cards.find(function(c) { return c.id === id; });
             if (!card) return;
 
-            const avatarStyle = card.avatar ? 'background-image:url("' + card.avatar + '");color:transparent;' : '';
-            const hasImages = card.cardFront || card.cardBack;
+            var avatarStyle = card.avatarUrl ? 'background-image:url("' + card.avatarUrl + '");color:transparent;' : '';
+            var hasImages = card.cardFrontUrl || card.cardBackUrl;
             
-            let imagesHtml = '';
+            var imagesHtml = '';
             if (hasImages) {
                 imagesHtml = '<div class="detail-images">';
-                if (card.cardFront) {
-                    imagesHtml += '<div class="detail-image"><img src="' + card.cardFront + '" alt="正面"><div class="detail-image-label">正面</div></div>';
+                if (card.cardFrontUrl) {
+                    imagesHtml += '<div class="detail-image"><img src="' + card.cardFrontUrl + '" alt="正面"><div class="detail-image-label">正面</div></div>';
                 }
-                if (card.cardBack) {
-                    imagesHtml += '<div class="detail-image"><img src="' + card.cardBack + '" alt="背面"><div class="detail-image-label">背面</div></div>';
+                if (card.cardBackUrl) {
+                    imagesHtml += '<div class="detail-image"><img src="' + card.cardBackUrl + '" alt="背面"><div class="detail-image-label">背面</div></div>';
                 }
                 imagesHtml += '</div>';
             }
@@ -1277,7 +1360,7 @@
             document.getElementById('detailContent').innerHTML = 
                 imagesHtml +
                 '<div class="detail-header">' +
-                    '<div class="detail-avatar avatar-' + (card.category || '其他') + '" style="' + avatarStyle + '">' + (card.avatar ? '' : card.name.charAt(0)) + '</div>' +
+                    '<div class="detail-avatar avatar-' + (card.category || '其他') + '" style="' + avatarStyle + '">' + (card.avatarUrl ? '' : card.name.charAt(0)) + '</div>' +
                     '<div class="detail-info">' +
                         '<h2>' + escapeHtml(card.name) + '</h2>' +
                         (card.nameEn ? '<div class="name-en">' + escapeHtml(card.nameEn) + '</div>' : '') +
@@ -1309,7 +1392,7 @@
         }
 
         function openEditModal(id) {
-            const card = cards.find(function(c) { return c.id === id; });
+            var card = cards.find(function(c) { return c.id === id; });
             if (!card) return;
 
             editingId = id;
@@ -1327,21 +1410,24 @@
             document.getElementById('cardWebsite').value = card.website || '';
             document.getElementById('cardNotes').value = card.notes || '';
 
-            // 顯示現有圖片
-            if (card.cardFront) {
-                cardFrontImage = card.cardFront;
-                document.getElementById('cardFrontBox').innerHTML = '<img src="' + card.cardFront + '" alt="正面">';
+            // 設定現有圖片 URL
+            cardFrontUrl = card.cardFrontUrl || '';
+            cardBackUrl = card.cardBackUrl || '';
+            avatarUrl = card.avatarUrl || '';
+            cardFrontImage = null;
+            cardBackImage = null;
+            avatarImage = null;
+
+            if (cardFrontUrl) {
+                document.getElementById('cardFrontBox').innerHTML = '<img src="' + cardFrontUrl + '" alt="正面">';
                 document.getElementById('cardFrontBox').classList.add('has-image');
-                document.getElementById('recognizeBtn').disabled = false;
             }
-            if (card.cardBack) {
-                cardBackImage = card.cardBack;
-                document.getElementById('cardBackBox').innerHTML = '<img src="' + card.cardBack + '" alt="背面">';
+            if (cardBackUrl) {
+                document.getElementById('cardBackBox').innerHTML = '<img src="' + cardBackUrl + '" alt="背面">';
                 document.getElementById('cardBackBox').classList.add('has-image');
             }
-            if (card.avatar) {
-                avatarImage = card.avatar;
-                document.getElementById('avatarPreview').style.backgroundImage = 'url("' + card.avatar + '")';
+            if (avatarUrl) {
+                document.getElementById('avatarPreview').style.backgroundImage = 'url("' + avatarUrl + '")';
                 document.getElementById('avatarPreview').classList.add('has-image');
                 document.getElementById('avatarPreview').textContent = '';
             }
@@ -1351,75 +1437,76 @@
             document.body.style.overflow = 'hidden';
         }
 
-        function deleteCard(id) {
-            if (!confirm('確定刪除？')) return;
-            cards = cards.filter(function(c) { return c.id !== id; });
-            saveToLocal();
-            renderCards();
-            closeDetailModal();
-            showNotification('🗑️ 已刪除');
+        async function deleteCard(id) {
+            if (!confirm('確定刪除這張名片？')) return;
+
+            showLoading('刪除中...');
+
+            try {
+                var result = await apiCall('delete', { id: id });
+
+                if (result.success) {
+                    showNotification('🗑️ 已刪除', 'success');
+                    closeDetailModal();
+                    await syncFromCloud();
+                } else {
+                    throw new Error(result.error || '刪除失敗');
+                }
+            } catch (err) {
+                console.error('刪除錯誤:', err);
+                showNotification('刪除失敗: ' + err.message, 'error');
+            }
+
+            hideLoading();
         }
 
         // ===== OCR 辨識 =====
         async function recognizeCard() {
             if (!cardFrontImage) return;
 
-            const btn = document.getElementById('recognizeBtn');
+            var btn = document.getElementById('recognizeBtn');
             btn.disabled = true;
             btn.innerHTML = '<span class="loading"></span>';
+            showLoading('辨識中...');
 
             try {
-                const base64 = cardFrontImage.split(',')[1];
-                const res = await fetch('https://vision.googleapis.com/v1/images:annotate?key=' + CONFIG.VISION_API_KEY, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        requests: [{
-                            image: { content: base64 },
-                            features: [{ type: 'TEXT_DETECTION', maxResults: 1 }]
-                        }]
-                    })
-                });
+                var base64Content = cardFrontImage.split(',')[1];
+                var result = await apiCall('ocr', { base64Image: base64Content });
 
-                const data = await res.json();
-                console.log('OCR 結果:', data);
+                console.log('OCR 結果:', result);
 
-                if (data.responses && data.responses[0] && data.responses[0].textAnnotations) {
-                    const text = data.responses[0].textAnnotations[0].description;
-                    document.getElementById('ocrText').textContent = text;
+                if (result.success && result.text) {
+                    document.getElementById('ocrText').textContent = result.text;
                     document.getElementById('ocrResult').classList.add('active');
-                    parseBusinessCard(text);
-                    showNotification('✅ 辨識完成');
-                } else if (data.error) {
-                    showNotification('辨識失敗: ' + data.error.message, true);
+                    parseBusinessCard(result.text);
+                    showNotification('✅ 辨識完成', 'success');
                 } else {
-                    showNotification('無法辨識文字', true);
+                    throw new Error(result.error || '無法辨識');
                 }
             } catch (err) {
                 console.error('OCR 錯誤:', err);
-                showNotification('辨識失敗: ' + err.message, true);
+                showNotification('辨識失敗: ' + err.message, 'error');
             }
 
+            hideLoading();
             btn.disabled = false;
             btn.innerHTML = '🔍 辨識';
         }
 
-        // ===== 解析名片（加強姓名辨識）=====
+        // ===== 解析名片 =====
         function parseBusinessCard(text) {
-            const lines = text.split('\n').map(function(l) { return l.trim(); }).filter(function(l) { return l; });
-            const allText = text;
-            
-            // 儲存已使用的行
-            let usedLines = [];
+            var lines = text.split('\n').map(function(l) { return l.trim(); }).filter(function(l) { return l; });
+            var allText = text;
+            var usedLines = [];
 
-            // ===== Email =====
-            const emailMatch = allText.match(/[\w.-]+@[\w.-]+\.\w+/);
+            // Email
+            var emailMatch = allText.match(/[\w.-]+@[\w.-]+\.\w+/);
             if (emailMatch) {
                 document.getElementById('cardEmail').value = emailMatch[0];
             }
 
-            // ===== 電話（多種格式）=====
-            const phonePatterns = [
+            // 電話
+            var phonePatterns = [
                 /09\d{2}[-\s]?\d{3}[-\s]?\d{3}/g,
                 /0\d{1,2}[-\s]?\d{3,4}[-\s]?\d{3,4}/g,
                 /\(\d{2,3}\)[-\s]?\d{3,4}[-\s]?\d{3,4}/g,
@@ -1427,27 +1514,27 @@
             ];
             
             for (var p = 0; p < phonePatterns.length; p++) {
-                const match = allText.match(phonePatterns[p]);
+                var match = allText.match(phonePatterns[p]);
                 if (match) {
                     document.getElementById('cardPhone').value = match[0];
                     break;
                 }
             }
 
-            // ===== LINE ID =====
-            const lineMatch = allText.match(/(?:LINE|Line|line)[\s:：ID]*([\w._-]+)/i);
+            // LINE ID
+            var lineMatch = allText.match(/(?:LINE|Line|line)[\s:：ID]*([\w._-]+)/i);
             if (lineMatch && lineMatch[1] && lineMatch[1].length > 2) {
                 document.getElementById('cardLine').value = lineMatch[1];
             }
 
-            // ===== 網站 =====
-            const webMatch = allText.match(/(?:www\.[\w.-]+\.\w+)|(?:https?:\/\/[\w.-]+)/i);
+            // 網站
+            var webMatch = allText.match(/(?:www\.[\w.-]+\.\w+)|(?:https?:\/\/[\w.-]+)/i);
             if (webMatch) {
                 document.getElementById('cardWebsite').value = webMatch[0];
             }
 
-            // ===== 公司（加強）=====
-            const companyKeywords = [
+            // 公司
+            var companyKeywords = [
                 '股份有限公司', '有限公司', '公司', '企業', '集團', 
                 '事務所', '工作室', '診所', '醫院', '銀行', '證券',
                 '學院', '大學', '學校', '協會', '基金會', '商行',
@@ -1467,8 +1554,8 @@
                 if (document.getElementById('cardCompany').value) break;
             }
 
-            // ===== 職稱 =====
-            const titleKeywords = [
+            // 職稱
+            var titleKeywords = [
                 '董事長', '總經理', '副總', '協理', '經理', '副理', '襄理',
                 '總監', '主管', '專員', '組長', '課長', '店長', '廠長',
                 '工程師', '設計師', '建築師', '會計師', '律師', '醫師', '藥師',
@@ -1491,9 +1578,8 @@
                 if (document.getElementById('cardTitle').value) break;
             }
 
-            // ===== 姓名（大幅加強）=====
-            // 中文姓名特徵：2-4個中文字，常見姓氏開頭
-            const commonSurnames = ['陳', '林', '黃', '張', '李', '王', '吳', '劉', '蔡', '楊', 
+            // 姓名（常見姓氏）
+            var commonSurnames = ['陳', '林', '黃', '張', '李', '王', '吳', '劉', '蔡', '楊', 
                 '許', '鄭', '謝', '郭', '洪', '曾', '邱', '廖', '賴', '周', '徐', '蘇', '葉',
                 '莊', '呂', '江', '何', '蕭', '羅', '高', '潘', '簡', '朱', '鍾', '游', '詹',
                 '彭', '施', '沈', '余', '盧', '梁', '趙', '顏', '柯', '翁', '魏', '孫', '戴',
@@ -1501,29 +1587,25 @@
                 '董', '温', '唐', '藍', '石', '蔣', '古', '紀', '姚', '連', '馮', '歐', '程',
                 '湯', '黎', '田', '康', '鄒', '白', '涂', '尤', '巫', '韓', '龔', '嚴', '袁'];
             
-            let foundChineseName = false;
+            var foundName = false;
             
-            // 第一優先：找常見姓氏開頭的 2-4 字中文名
             for (var i = 0; i < lines.length; i++) {
                 var line = lines[i];
                 if (usedLines.includes(line)) continue;
                 if (line.includes('@') || line.includes('www') || line.match(/\d{4,}/)) continue;
                 
-                // 純中文 2-4 字
                 if (/^[\u4e00-\u9fa5]{2,4}$/.test(line)) {
-                    // 檢查是否以常見姓氏開頭
-                    const firstChar = line.charAt(0);
+                    var firstChar = line.charAt(0);
                     if (commonSurnames.includes(firstChar)) {
                         document.getElementById('cardName').value = line;
                         usedLines.push(line);
-                        foundChineseName = true;
+                        foundName = true;
                         break;
                     }
                 }
             }
             
-            // 第二優先：任何 2-4 字純中文（可能是較少見的姓）
-            if (!foundChineseName) {
+            if (!foundName) {
                 for (var i = 0; i < lines.length; i++) {
                     var line = lines[i];
                     if (usedLines.includes(line)) continue;
@@ -1532,30 +1614,26 @@
                     if (/^[\u4e00-\u9fa5]{2,4}$/.test(line)) {
                         document.getElementById('cardName').value = line;
                         usedLines.push(line);
-                        foundChineseName = true;
                         break;
                     }
                 }
             }
 
-            // ===== 英文名 =====
-            // 找英文名（通常是 2-3 個英文單字）
-            const englishNamePattern = /^[A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2}$/;
+            // 英文名
+            var englishNamePattern = /^[A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2}$/;
             for (var i = 0; i < lines.length; i++) {
                 var line = lines[i];
                 if (usedLines.includes(line)) continue;
                 if (line.includes('@') || line.includes('www') || line.includes('.com')) continue;
                 
-                // 符合英文名格式（首字大寫）
                 if (englishNamePattern.test(line) && line.length > 3 && line.length < 30) {
                     document.getElementById('cardNameEn').value = line;
-                    usedLines.push(line);
                     break;
                 }
             }
 
-            // ===== 地址 =====
-            const addressKeywords = ['市', '縣', '區', '鄉', '鎮', '路', '街', '巷', '弄', '號', '樓'];
+            // 地址
+            var addressKeywords = ['市', '縣', '區', '鄉', '鎮', '路', '街', '巷', '弄', '號', '樓'];
             for (var i = 0; i < lines.length; i++) {
                 var line = lines[i];
                 var matchCount = 0;
@@ -1583,7 +1661,6 @@
             }
         });
 
-        // ===== 點擊背景關閉 =====
         document.getElementById('addModal').addEventListener('click', function(e) {
             if (e.target === this) closeAddModal();
         });
