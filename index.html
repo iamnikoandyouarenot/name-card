@@ -1097,22 +1097,24 @@
 
                 if (result.success && result.data) {
                     cards = result.data.map(function(row) {
+                        // 確保所有值都是字串
+                        var str = function(val) { return val === null || val === undefined ? '' : String(val); };
                         return {
-                            id: row['ID'] || String(Date.now()),
-                            name: row['姓名'] || '',
-                            nameEn: row['英文名'] || '',
-                            company: row['公司'] || '',
-                            title: row['職稱'] || '',
-                            phone: row['電話'] || '',
-                            email: row['Email'] || '',
-                            lineId: row['LINE_ID'] || '',
-                            category: row['分類'] || '其他',
-                            address: row['地址'] || '',
-                            website: row['網站'] || '',
-                            notes: row['備註'] || '',
-                            cardFrontUrl: row['名片正面'] || '',
-                            cardBackUrl: row['名片背面'] || '',
-                            avatarUrl: row['大頭照'] || ''
+                            id: str(row['ID']) || String(Date.now()),
+                            name: str(row['姓名']),
+                            nameEn: str(row['英文名']),
+                            company: str(row['公司']),
+                            title: str(row['職稱']),
+                            phone: str(row['電話']),
+                            email: str(row['Email']),
+                            lineId: str(row['LINE_ID']),
+                            category: str(row['分類']) || '其他',
+                            address: str(row['地址']),
+                            website: str(row['網站']),
+                            notes: str(row['備註']),
+                            cardFrontUrl: str(row['名片正面']),
+                            cardBackUrl: str(row['名片背面']),
+                            avatarUrl: str(row['大頭照'])
                         };
                     });
 
