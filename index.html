@@ -3,7 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0f172a">
     <title>名片管理中心</title>
+    <link rel="manifest" href="data:application/json,{'name':'名片管理','short_name':'名片','start_url':'.','display':'standalone','background_color':'%230f172a','theme_color':'%230f172a'}">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -19,11 +23,7 @@
             --danger: #ef4444;
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: 'Noto Sans TC', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -31,6 +31,7 @@
             min-height: 100vh;
             color: var(--text-primary);
             overflow-x: hidden;
+            padding-bottom: env(safe-area-inset-bottom);
         }
 
         body::before {
@@ -45,10 +46,11 @@
         }
 
         .header {
-            background: rgba(15, 23, 42, 0.9);
+            background: rgba(15, 23, 42, 0.95);
             backdrop-filter: blur(20px);
             border-bottom: 1px solid var(--border);
-            padding: 16px 20px;
+            padding: 12px 16px;
+            padding-top: calc(12px + env(safe-area-inset-top));
             position: sticky;
             top: 0;
             z-index: 100;
@@ -58,48 +60,47 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 16px;
-            flex-wrap: wrap;
-            gap: 12px;
+            margin-bottom: 12px;
+            gap: 10px;
         }
 
         .logo {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
         }
 
         .logo-icon {
-            width: 44px;
-            height: 44px;
+            width: 40px;
+            height: 40px;
             background: linear-gradient(135deg, var(--primary), var(--accent));
-            border-radius: 12px;
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 22px;
-            box-shadow: 0 4px 20px rgba(6, 214, 160, 0.3);
+            font-size: 20px;
+            box-shadow: 0 4px 15px rgba(6, 214, 160, 0.3);
         }
 
-        .logo-text h1 { font-size: 20px; font-weight: 700; }
-        .logo-text p { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+        .logo-text h1 { font-size: 18px; font-weight: 700; }
+        .logo-text p { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
 
         .header-actions {
             display: flex;
-            gap: 10px;
+            gap: 8px;
             align-items: center;
         }
 
         .btn {
-            padding: 10px 16px;
-            border-radius: 10px;
-            font-size: 14px;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 13px;
             font-weight: 500;
             cursor: pointer;
             transition: all 0.2s;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 5px;
             border: none;
             font-family: inherit;
         }
@@ -122,24 +123,30 @@
             border: 1px solid rgba(239, 68, 68, 0.3);
         }
 
+        .btn-icon {
+            padding: 8px;
+            min-width: 36px;
+            justify-content: center;
+        }
+
         .search-section {
             display: flex;
-            gap: 12px;
+            gap: 10px;
             flex-wrap: wrap;
         }
 
         .search-box {
             flex: 1;
-            min-width: 200px;
+            min-width: 180px;
             position: relative;
         }
 
         .search-box input {
             width: 100%;
-            padding: 12px 16px 12px 44px;
+            padding: 10px 14px 10px 38px;
             background: rgba(255,255,255,0.08);
             border: 1px solid var(--border);
-            border-radius: 10px;
+            border-radius: 8px;
             color: var(--text-primary);
             font-size: 14px;
             outline: none;
@@ -150,21 +157,22 @@
         .search-box::before {
             content: '🔍';
             position: absolute;
-            left: 14px;
+            left: 12px;
             top: 50%;
             transform: translateY(-50%);
+            font-size: 14px;
         }
 
         .categories {
             display: flex;
-            gap: 8px;
+            gap: 6px;
             flex-wrap: wrap;
         }
 
         .category-btn {
-            padding: 8px 14px;
-            border-radius: 20px;
-            font-size: 13px;
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 12px;
             cursor: pointer;
             transition: all 0.2s;
             background: rgba(255,255,255,0.08);
@@ -180,40 +188,41 @@
         }
 
         .main {
-            padding: 20px;
+            padding: 16px;
             position: relative;
             z-index: 1;
         }
 
         .stats {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 12px;
-            margin-bottom: 20px;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 16px;
         }
 
         .stat-card {
             background: var(--bg-card);
-            border-radius: 14px;
-            padding: 16px;
+            border-radius: 12px;
+            padding: 12px;
             border: 1px solid var(--border);
+            text-align: center;
         }
 
-        .stat-label { font-size: 13px; color: var(--text-secondary); margin-bottom: 6px; }
-        .stat-value { font-size: 28px; font-weight: 700; }
+        .stat-label { font-size: 11px; color: var(--text-secondary); margin-bottom: 4px; }
+        .stat-value { font-size: 24px; font-weight: 700; }
         .stat-value.primary { color: var(--primary); }
         .stat-value.accent { color: var(--accent); }
 
         .cards-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 16px;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 14px;
         }
 
         .card {
             background: var(--bg-card);
-            border-radius: 16px;
-            padding: 20px;
+            border-radius: 14px;
+            padding: 16px;
             border: 1px solid var(--border);
             cursor: pointer;
             transition: all 0.3s;
@@ -221,71 +230,68 @@
         }
 
         .card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.3);
             border-color: rgba(6, 214, 160, 0.3);
         }
 
         .card-category {
             position: absolute;
-            top: 16px;
-            right: 16px;
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 11px;
+            top: 12px;
+            right: 12px;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 10px;
             font-weight: 600;
         }
 
         .card-header {
             display: flex;
             align-items: center;
-            gap: 14px;
-            margin-bottom: 14px;
+            gap: 12px;
+            margin-bottom: 12px;
         }
 
         .card-avatar {
-            width: 50px;
-            height: 50px;
-            border-radius: 14px;
+            width: 46px;
+            height: 46px;
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 22px;
+            font-size: 20px;
             font-weight: 700;
             background-size: cover;
             background-position: center;
+            flex-shrink: 0;
         }
 
-        .card-name { font-size: 18px; font-weight: 700; margin-bottom: 2px; }
-        .card-title { font-size: 13px; color: var(--text-secondary); }
-        .card-company { font-size: 14px; color: var(--text-secondary); margin-bottom: 12px; }
-        .card-contacts { display: flex; flex-direction: column; gap: 8px; }
-        .card-contact { font-size: 13px; color: var(--text-secondary); display: flex; align-items: center; gap: 8px; }
+        .card-name { font-size: 16px; font-weight: 700; margin-bottom: 2px; }
+        .card-name-en { font-size: 12px; color: var(--text-muted); }
+        .card-title { font-size: 12px; color: var(--text-secondary); }
+        .card-company { font-size: 13px; color: var(--text-secondary); margin-bottom: 10px; }
+        .card-contacts { display: flex; flex-direction: column; gap: 6px; }
+        .card-contact { font-size: 12px; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; }
 
         .card-line {
             background: rgba(6, 214, 160, 0.1);
-            padding: 8px 12px;
-            border-radius: 8px;
+            padding: 6px 10px;
+            border-radius: 6px;
             border: 1px solid rgba(6, 214, 160, 0.2);
             color: var(--primary);
             font-weight: 500;
         }
 
-        .card-notes {
-            margin-top: 12px;
-            padding: 10px;
-            background: rgba(255,255,255,0.04);
-            border-radius: 8px;
-            font-size: 12px;
-            color: var(--text-muted);
-            border-left: 3px solid var(--border);
+        .card-images {
+            display: flex;
+            gap: 6px;
+            margin-top: 10px;
         }
 
         .card-image-thumb {
-            width: 100%;
-            height: 80px;
-            margin-top: 12px;
-            border-radius: 8px;
+            flex: 1;
+            height: 50px;
+            border-radius: 6px;
             background-size: cover;
             background-position: center;
             border: 1px solid var(--border);
@@ -310,60 +316,59 @@
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.7);
+            background: rgba(0,0,0,0.8);
             backdrop-filter: blur(8px);
             display: none;
-            align-items: center;
+            align-items: flex-start;
             justify-content: center;
             z-index: 200;
             padding: 20px;
+            padding-top: calc(20px + env(safe-area-inset-top));
+            overflow-y: auto;
         }
 
-        .modal-overlay.active {
-            display: flex;
-        }
+        .modal-overlay.active { display: flex; }
 
         .modal {
             background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
-            border-radius: 20px;
-            padding: 24px;
+            border-radius: 16px;
+            padding: 20px;
             width: 100%;
-            max-width: 500px;
-            max-height: 90vh;
-            overflow-y: auto;
+            max-width: 480px;
             border: 1px solid var(--border);
+            margin-bottom: 20px;
         }
 
         .modal-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
         }
 
-        .modal-header h2 { font-size: 20px; font-weight: 700; }
+        .modal-header h2 { font-size: 18px; font-weight: 700; }
 
         .modal-close {
-            width: 36px;
-            height: 36px;
-            border-radius: 10px;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
             background: rgba(255,255,255,0.1);
             border: none;
             color: var(--text-secondary);
-            font-size: 18px;
+            font-size: 16px;
             cursor: pointer;
         }
 
-        .form-group { margin-bottom: 14px; }
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .form-label { display: block; font-size: 13px; color: var(--text-secondary); margin-bottom: 6px; }
+        .form-group { margin-bottom: 12px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .form-label { display: block; font-size: 12px; color: var(--text-secondary); margin-bottom: 5px; }
 
         .form-input {
             width: 100%;
-            padding: 12px;
+            padding: 10px 12px;
             background: rgba(255,255,255,0.08);
             border: 1px solid var(--border);
-            border-radius: 10px;
+            border-radius: 8px;
             color: var(--text-primary);
             font-size: 14px;
             outline: none;
@@ -373,195 +378,266 @@
         .form-input:focus { border-color: var(--primary); }
         .form-input::placeholder { color: var(--text-muted); }
         .form-input.highlight { background: rgba(6, 214, 160, 0.1); border-color: rgba(6, 214, 160, 0.3); }
-        textarea.form-input { resize: vertical; min-height: 70px; }
+        textarea.form-input { resize: vertical; min-height: 60px; }
 
         .form-actions {
             display: flex;
-            gap: 12px;
-            margin-top: 20px;
+            gap: 10px;
+            margin-top: 16px;
         }
 
         .form-actions .btn {
             flex: 1;
             justify-content: center;
-            padding: 14px;
+            padding: 12px;
         }
 
-        /* 拍照區 */
-        .camera-section {
-            margin-bottom: 16px;
-            padding: 14px;
+        /* 圖片上傳區 */
+        .image-section {
+            margin-bottom: 14px;
+            padding: 12px;
             background: rgba(255,255,255,0.04);
-            border-radius: 12px;
-            border: 2px dashed var(--border);
+            border-radius: 10px;
+            border: 1px dashed var(--border);
         }
 
-        .camera-preview {
-            width: 100%;
-            max-height: 180px;
-            object-fit: contain;
-            border-radius: 8px;
-            display: none;
-            margin-bottom: 12px;
+        .image-section-title {
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--text-primary);
         }
 
-        .camera-preview.active { display: block; }
-
-        .camera-btns {
+        .image-row {
             display: flex;
             gap: 10px;
-            flex-wrap: wrap;
+            margin-bottom: 10px;
         }
 
-        .camera-btn {
+        .image-box {
             flex: 1;
-            min-width: 100px;
-            padding: 10px;
-            border-radius: 10px;
+            aspect-ratio: 16/10;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.06);
+            border: 2px dashed var(--border);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .image-box.has-image {
+            border-style: solid;
+            border-color: var(--primary);
+        }
+
+        .image-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .image-box-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-align: center;
+        }
+
+        .image-box-icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+
+        .image-btns {
+            display: flex;
+            gap: 8px;
+        }
+
+        .image-btn {
+            flex: 1;
+            padding: 8px;
+            border-radius: 8px;
             border: none;
-            font-size: 13px;
-            font-weight: 500;
+            font-size: 12px;
             cursor: pointer;
             font-family: inherit;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
         }
 
-        .camera-btn.capture { background: linear-gradient(135deg, var(--accent), #2563eb); color: white; }
-        .camera-btn.recognize { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; }
-        .camera-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .image-btn.camera { background: linear-gradient(135deg, var(--accent), #2563eb); color: white; }
+        .image-btn.gallery { background: rgba(255,255,255,0.1); color: var(--text-primary); border: 1px solid var(--border); }
+        .image-btn.recognize { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; }
+        .image-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-        #cameraInput, #avatarInput { display: none; }
-
-        .ocr-result {
-            margin-top: 12px;
-            padding: 12px;
-            background: rgba(6, 214, 160, 0.1);
-            border-radius: 10px;
-            border: 1px solid rgba(6, 214, 160, 0.2);
-            font-size: 12px;
-            display: none;
-        }
-
-        .ocr-result.active { display: block; }
-        .ocr-result h4 { color: var(--primary); margin-bottom: 8px; font-size: 13px; }
-        .ocr-text { color: var(--text-secondary); line-height: 1.5; white-space: pre-wrap; max-height: 120px; overflow-y: auto; }
-
-        /* 大頭照區 */
+        /* 大頭照 */
         .avatar-section {
             display: flex;
             align-items: center;
-            gap: 14px;
-            margin-bottom: 16px;
-            padding: 14px;
+            gap: 12px;
+            margin-bottom: 14px;
+            padding: 12px;
             background: rgba(255,255,255,0.04);
-            border-radius: 12px;
+            border-radius: 10px;
         }
 
         .avatar-preview {
-            width: 70px;
-            height: 70px;
-            border-radius: 14px;
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
             background: rgba(255,255,255,0.1);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 28px;
+            font-size: 24px;
             background-size: cover;
             background-position: center;
             border: 2px dashed var(--border);
             flex-shrink: 0;
+            cursor: pointer;
         }
 
         .avatar-preview.has-image { border-style: solid; border-color: var(--primary); }
         .avatar-info { flex: 1; }
-        .avatar-info h4 { font-size: 14px; margin-bottom: 4px; }
-        .avatar-info p { font-size: 11px; color: var(--text-muted); margin-bottom: 8px; }
+        .avatar-info h4 { font-size: 13px; margin-bottom: 3px; }
+        .avatar-info p { font-size: 11px; color: var(--text-muted); margin-bottom: 6px; }
+
+        .avatar-btns {
+            display: flex;
+            gap: 6px;
+        }
 
         .avatar-btn {
-            padding: 8px 12px;
+            padding: 6px 10px;
             background: rgba(255,255,255,0.1);
             border: 1px solid var(--border);
-            border-radius: 8px;
+            border-radius: 6px;
             color: var(--text-primary);
-            font-size: 12px;
+            font-size: 11px;
             cursor: pointer;
             font-family: inherit;
         }
 
+        /* OCR 結果 */
+        .ocr-result {
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(6, 214, 160, 0.1);
+            border-radius: 8px;
+            border: 1px solid rgba(6, 214, 160, 0.2);
+            font-size: 11px;
+            display: none;
+        }
+
+        .ocr-result.active { display: block; }
+        .ocr-result h4 { color: var(--primary); margin-bottom: 6px; font-size: 12px; }
+        .ocr-text { color: var(--text-secondary); line-height: 1.4; white-space: pre-wrap; max-height: 100px; overflow-y: auto; font-size: 11px; }
+
         /* 詳細頁 */
-        .detail-header { display: flex; gap: 14px; margin-bottom: 16px; }
+        .detail-header { display: flex; gap: 12px; margin-bottom: 14px; }
 
         .detail-avatar {
-            width: 70px;
-            height: 70px;
-            border-radius: 16px;
+            width: 65px;
+            height: 65px;
+            border-radius: 14px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 30px;
+            font-size: 28px;
             font-weight: 700;
             background-size: cover;
             background-position: center;
             flex-shrink: 0;
         }
 
-        .detail-info h2 { font-size: 24px; margin-bottom: 4px; }
-        .detail-info p { color: var(--text-secondary); font-size: 14px; }
+        .detail-info h2 { font-size: 22px; margin-bottom: 2px; }
+        .detail-info .name-en { font-size: 13px; color: var(--text-muted); margin-bottom: 4px; }
+        .detail-info p { color: var(--text-secondary); font-size: 13px; }
 
         .detail-category {
             display: inline-block;
-            padding: 4px 10px;
-            border-radius: 10px;
-            font-size: 11px;
+            padding: 3px 8px;
+            border-radius: 8px;
+            font-size: 10px;
             font-weight: 600;
-            margin-top: 6px;
+            margin-top: 5px;
+        }
+
+        .detail-images {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+
+        .detail-image {
+            flex: 1;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        .detail-image img {
+            width: 100%;
+            display: block;
+        }
+
+        .detail-image-label {
+            font-size: 10px;
+            color: var(--text-muted);
+            text-align: center;
+            padding: 4px;
+            background: rgba(0,0,0,0.3);
         }
 
         .detail-section {
             background: rgba(255,255,255,0.04);
-            border-radius: 12px;
-            padding: 14px;
-            margin-bottom: 14px;
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 12px;
         }
 
         .detail-row {
             display: flex;
             align-items: center;
-            padding: 8px 0;
+            padding: 7px 0;
             border-bottom: 1px solid rgba(255,255,255,0.06);
         }
 
         .detail-row:last-child { border-bottom: none; }
-        .detail-row-icon { font-size: 16px; margin-right: 10px; }
-        .detail-row-label { width: 60px; font-size: 12px; color: var(--text-muted); }
-        .detail-row-value { flex: 1; font-size: 14px; }
+        .detail-row-icon { font-size: 14px; margin-right: 8px; }
+        .detail-row-label { width: 55px; font-size: 11px; color: var(--text-muted); }
+        .detail-row-value { flex: 1; font-size: 13px; }
         .detail-row-value a { color: var(--text-primary); text-decoration: none; }
         .detail-row-value a:hover { color: var(--primary); }
         .detail-row-value.line { color: var(--primary); font-weight: 500; }
 
-        .detail-notes { background: rgba(255,255,255,0.04); border-radius: 12px; padding: 14px; margin-bottom: 14px; }
-        .detail-notes h4 { font-size: 13px; color: var(--text-secondary); margin-bottom: 6px; }
-        .detail-notes p { font-size: 14px; line-height: 1.5; }
+        .detail-notes { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 12px; margin-bottom: 12px; }
+        .detail-notes h4 { font-size: 12px; color: var(--text-secondary); margin-bottom: 5px; }
+        .detail-notes p { font-size: 13px; line-height: 1.5; }
 
-        .detail-card-image { width: 100%; border-radius: 12px; margin-bottom: 14px; border: 1px solid var(--border); }
-
-        .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
-        .empty-state-icon { font-size: 50px; margin-bottom: 14px; opacity: 0.5; }
-        .empty-state h3 { font-size: 16px; margin-bottom: 8px; color: var(--text-secondary); }
+        .empty-state { text-align: center; padding: 50px 20px; color: var(--text-muted); }
+        .empty-state-icon { font-size: 45px; margin-bottom: 12px; opacity: 0.5; }
+        .empty-state h3 { font-size: 15px; margin-bottom: 6px; color: var(--text-secondary); }
 
         .notification {
             position: fixed;
-            top: 20px;
+            top: calc(10px + env(safe-area-inset-top));
             left: 50%;
             transform: translateX(-50%) translateY(-100px);
             background: var(--primary);
             color: white;
-            padding: 12px 24px;
-            border-radius: 10px;
+            padding: 10px 20px;
+            border-radius: 8px;
             font-weight: 500;
             box-shadow: 0 10px 40px rgba(0,0,0,0.3);
             z-index: 300;
             transition: transform 0.3s;
-            font-size: 14px;
+            font-size: 13px;
         }
 
         .notification.active { transform: translateX(-50%) translateY(0); }
@@ -569,8 +645,8 @@
 
         .loading {
             display: inline-block;
-            width: 18px;
-            height: 18px;
+            width: 16px;
+            height: 16px;
             border: 2px solid rgba(255,255,255,0.3);
             border-top-color: white;
             border-radius: 50%;
@@ -579,22 +655,33 @@
 
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        .sync-status { font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 5px; }
-        .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--primary); }
+        .sync-status { font-size: 10px; color: var(--text-muted); display: flex; align-items: center; gap: 4px; }
+        .sync-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--primary); }
         .sync-dot.syncing { animation: pulse 1s infinite; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
-        @media (max-width: 600px) {
-            .header-top { flex-direction: column; align-items: stretch; }
-            .header-actions { justify-content: center; }
+        /* 隱藏的 input */
+        .hidden-input { display: none; }
+
+        @media (max-width: 480px) {
+            .header-top { flex-wrap: wrap; }
             .form-row { grid-template-columns: 1fr; }
             .cards-grid { grid-template-columns: 1fr; }
             .avatar-section { flex-direction: column; text-align: center; }
+            .avatar-btns { justify-content: center; }
         }
     </style>
 </head>
 <body>
     <div id="notification" class="notification"></div>
+
+    <!-- 隱藏的 file inputs -->
+    <input type="file" id="cardFrontCameraInput" class="hidden-input" accept="image/*" capture="environment">
+    <input type="file" id="cardFrontGalleryInput" class="hidden-input" accept="image/*">
+    <input type="file" id="cardBackCameraInput" class="hidden-input" accept="image/*" capture="environment">
+    <input type="file" id="cardBackGalleryInput" class="hidden-input" accept="image/*">
+    <input type="file" id="avatarCameraInput" class="hidden-input" accept="image/*" capture="user">
+    <input type="file" id="avatarGalleryInput" class="hidden-input" accept="image/*">
 
     <header class="header">
         <div class="header-top">
@@ -602,7 +689,7 @@
                 <div class="logo-icon">📇</div>
                 <div class="logo-text">
                     <h1>名片管理中心</h1>
-                    <p>📷 拍照辨識 · 💬 LINE 整合 · ☁️ 雲端同步</p>
+                    <p>📷 拍照辨識 · 💬 LINE 整合</p>
                 </div>
             </div>
             <div class="header-actions">
@@ -610,13 +697,14 @@
                     <span class="sync-dot" id="syncDot"></span>
                     <span id="syncText">本地</span>
                 </div>
-                <button class="btn btn-secondary" onclick="syncFromSheet()">🔄 同步</button>
+                <button class="btn btn-secondary btn-icon" onclick="reloadApp()" title="重新整理">🔄</button>
+                <button class="btn btn-secondary btn-icon" onclick="syncFromSheet()" title="雲端同步">☁️</button>
                 <button class="btn btn-primary" onclick="openAddModal()">➕ 新增</button>
             </div>
         </div>
         <div class="search-section">
             <div class="search-box">
-                <input type="text" id="searchInput" placeholder="搜尋姓名、公司、LINE ID..." oninput="filterCards()">
+                <input type="text" id="searchInput" placeholder="搜尋姓名、公司、LINE..." oninput="filterCards()">
             </div>
             <div class="categories" id="categories"></div>
         </div>
@@ -648,12 +736,27 @@
                 <button class="modal-close" onclick="closeAddModal()">✕</button>
             </div>
 
-            <div class="camera-section">
-                <img id="cameraPreview" class="camera-preview" alt="名片">
-                <input type="file" id="cameraInput" accept="image/*" capture="environment">
-                <div class="camera-btns">
-                    <button type="button" class="camera-btn capture" onclick="document.getElementById('cameraInput').click()">📷 拍名片</button>
-                    <button type="button" class="camera-btn recognize" id="recognizeBtn" onclick="recognizeCard()" disabled>🔍 辨識</button>
+            <!-- 名片照片區 -->
+            <div class="image-section">
+                <div class="image-section-title">📸 名片照片</div>
+                <div class="image-row">
+                    <div class="image-box" id="cardFrontBox" onclick="showImageOptions('front')">
+                        <span class="image-box-icon">📄</span>
+                        <span class="image-box-label">正面</span>
+                    </div>
+                    <div class="image-box" id="cardBackBox" onclick="showImageOptions('back')">
+                        <span class="image-box-icon">📄</span>
+                        <span class="image-box-label">背面</span>
+                    </div>
+                </div>
+                <div class="image-btns">
+                    <button type="button" class="image-btn camera" onclick="captureCard('front')">📷 拍正面</button>
+                    <button type="button" class="image-btn gallery" onclick="selectCard('front')">🖼️ 選正面</button>
+                    <button type="button" class="image-btn recognize" id="recognizeBtn" onclick="recognizeCard()" disabled>🔍 辨識</button>
+                </div>
+                <div class="image-btns" style="margin-top:6px;">
+                    <button type="button" class="image-btn camera" onclick="captureCard('back')">📷 拍背面</button>
+                    <button type="button" class="image-btn gallery" onclick="selectCard('back')">🖼️ 選背面</button>
                 </div>
                 <div class="ocr-result" id="ocrResult">
                     <h4>📝 辨識結果</h4>
@@ -661,82 +764,80 @@
                 </div>
             </div>
 
+            <!-- 大頭照區 -->
             <div class="avatar-section">
-                <div class="avatar-preview" id="avatarPreview">👤</div>
-                <input type="file" id="avatarInput" accept="image/*">
+                <div class="avatar-preview" id="avatarPreview" onclick="showAvatarOptions()">👤</div>
                 <div class="avatar-info">
                     <h4>📸 大頭照</h4>
                     <p>上傳聯絡人照片</p>
-                    <button type="button" class="avatar-btn" onclick="document.getElementById('avatarInput').click()">選擇照片</button>
+                    <div class="avatar-btns">
+                        <button type="button" class="avatar-btn" onclick="captureAvatar()">📷 拍照</button>
+                        <button type="button" class="avatar-btn" onclick="selectAvatar()">🖼️ 選擇</button>
+                    </div>
                 </div>
             </div>
 
-            <div id="cardForm">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label">👤 姓名 *</label>
-                        <input type="text" class="form-input" id="cardName" placeholder="王大明">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">📁 分類</label>
-                        <select class="form-input" id="cardCategory">
-                            <option value="客戶">客戶</option>
-                            <option value="供應商">供應商</option>
-                            <option value="合作夥伴">合作夥伴</option>
-                            <option value="同事">同事</option>
-                            <option value="朋友">朋友</option>
-                            <option value="其他">其他</option>
-                        </select>
-                    </div>
+            <!-- 表單 -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">👤 姓名（中文）*</label>
+                    <input type="text" class="form-input" id="cardName" placeholder="王大明">
                 </div>
+                <div class="form-group">
+                    <label class="form-label">🔤 英文名</label>
+                    <input type="text" class="form-input" id="cardNameEn" placeholder="David Wang">
+                </div>
+            </div>
+            <div class="form-row">
                 <div class="form-group">
                     <label class="form-label">🏢 公司</label>
-                    <input type="text" class="form-input" id="cardCompany" placeholder="台灣科技股份有限公司">
+                    <input type="text" class="form-input" id="cardCompany" placeholder="台灣科技公司">
                 </div>
                 <div class="form-group">
-                    <label class="form-label">💼 職稱</label>
-                    <input type="text" class="form-input" id="cardTitle" placeholder="業務經理">
+                    <label class="form-label">📁 分類</label>
+                    <select class="form-input" id="cardCategory">
+                        <option value="客戶">客戶</option>
+                        <option value="供應商">供應商</option>
+                        <option value="合作夥伴">合作夥伴</option>
+                        <option value="同事">同事</option>
+                        <option value="朋友">朋友</option>
+                        <option value="其他">其他</option>
+                    </select>
                 </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label">📱 電話</label>
-                        <input type="tel" class="form-input" id="cardPhone" placeholder="0912-345-678">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">💬 LINE ID</label>
-                        <input type="text" class="form-input highlight" id="cardLine" placeholder="line_id">
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label">📠 傳真</label>
-                        <input type="tel" class="form-input" id="cardFax" placeholder="02-1234-5678">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">📱 手機2</label>
-                        <input type="tel" class="form-input" id="cardMobile2" placeholder="">
-                    </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">💼 職稱</label>
+                <input type="text" class="form-input" id="cardTitle" placeholder="業務經理">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">📱 電話</label>
+                    <input type="tel" class="form-input" id="cardPhone" placeholder="0912-345-678">
                 </div>
                 <div class="form-group">
-                    <label class="form-label">✉️ Email</label>
-                    <input type="email" class="form-input" id="cardEmail" placeholder="email@example.com">
+                    <label class="form-label">💬 LINE ID</label>
+                    <input type="text" class="form-input highlight" id="cardLine" placeholder="line_id">
                 </div>
-                <div class="form-group">
-                    <label class="form-label">📍 地址</label>
-                    <input type="text" class="form-input" id="cardAddress" placeholder="台北市...">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">🌐 網站</label>
-                    <input type="text" class="form-input" id="cardWebsite" placeholder="www.example.com">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">📝 備註</label>
-                    <textarea class="form-input" id="cardNotes" placeholder="備註..."></textarea>
-                </div>
-                <div class="form-actions">
-                    <button type="button" class="btn btn-secondary" onclick="closeAddModal()">取消</button>
-                    <button type="button" class="btn btn-primary" onclick="saveCard()">💾 儲存</button>
-                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">✉️ Email</label>
+                <input type="email" class="form-input" id="cardEmail" placeholder="email@example.com">
+            </div>
+            <div class="form-group">
+                <label class="form-label">📍 地址</label>
+                <input type="text" class="form-input" id="cardAddress" placeholder="台北市...">
+            </div>
+            <div class="form-group">
+                <label class="form-label">🌐 網站</label>
+                <input type="text" class="form-input" id="cardWebsite" placeholder="www.example.com">
+            </div>
+            <div class="form-group">
+                <label class="form-label">📝 備註</label>
+                <textarea class="form-input" id="cardNotes" placeholder="備註..."></textarea>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeAddModal()">取消</button>
+                <button type="button" class="btn btn-primary" onclick="saveCard()">💾 儲存</button>
             </div>
         </div>
     </div>
@@ -753,72 +854,126 @@
     </div>
 
     <script>
-        // 設定
+        // ===== 設定 =====
         const CONFIG = {
             VISION_API_KEY: 'AIzaSyDLVs8BwB5Uy0EWl0HSjAwXKxVml1bAv_Y',
             SHEET_ID: '1WcV71Rh8T5uxgce-Nuh5XuO8Fn1Mn1GGLp8cYpmY1oo'
         };
 
-        // 分類
         const CATEGORIES = ['全部', '客戶', '供應商', '合作夥伴', '同事', '朋友', '其他'];
 
-        // 全域變數
+        // ===== 全域變數 =====
         let cards = [];
         let currentCategory = '全部';
-        let currentImage = null;
-        let currentAvatar = null;
+        let cardFrontImage = null;
+        let cardBackImage = null;
+        let avatarImage = null;
         let editingId = null;
 
-        // 初始化
+        // ===== 初始化 =====
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('App 初始化...');
+            console.log('App 初始化 v4...');
             initCategories();
             initFileInputs();
             loadFromLocal();
             renderCards();
-            // 嘗試同步
-            setTimeout(syncFromSheet, 1000);
+            setTimeout(syncFromSheet, 500);
         });
 
-        // 初始化分類按鈕
+        // ===== Reload 功能 =====
+        function reloadApp() {
+            showNotification('🔄 重新整理中...');
+            setTimeout(function() {
+                location.reload();
+            }, 300);
+        }
+
+        // ===== 初始化分類 =====
         function initCategories() {
             const container = document.getElementById('categories');
-            container.innerHTML = CATEGORIES.map(cat => 
-                `<button class="category-btn ${cat === '全部' ? 'active' : ''}" data-cat="${cat}" onclick="selectCategory(this)">${cat}</button>`
-            ).join('');
+            container.innerHTML = CATEGORIES.map(function(cat) {
+                return '<button class="category-btn ' + (cat === '全部' ? 'active' : '') + '" data-cat="' + cat + '" onclick="selectCategory(this)">' + cat + '</button>';
+            }).join('');
         }
 
-        // 初始化檔案輸入
+        // ===== 初始化檔案輸入 =====
         function initFileInputs() {
-            document.getElementById('cameraInput').addEventListener('change', function(e) {
-                const file = e.target.files[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = function(evt) {
-                    currentImage = evt.target.result;
-                    document.getElementById('cameraPreview').src = currentImage;
-                    document.getElementById('cameraPreview').classList.add('active');
-                    document.getElementById('recognizeBtn').disabled = false;
-                };
-                reader.readAsDataURL(file);
+            // 名片正面
+            document.getElementById('cardFrontCameraInput').addEventListener('change', function(e) {
+                handleCardImage(e, 'front');
+            });
+            document.getElementById('cardFrontGalleryInput').addEventListener('change', function(e) {
+                handleCardImage(e, 'front');
             });
 
-            document.getElementById('avatarInput').addEventListener('change', function(e) {
-                const file = e.target.files[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = function(evt) {
-                    currentAvatar = evt.target.result;
-                    const preview = document.getElementById('avatarPreview');
-                    preview.style.backgroundImage = `url('${currentAvatar}')`;
-                    preview.classList.add('has-image');
-                    preview.textContent = '';
-                };
-                reader.readAsDataURL(file);
+            // 名片背面
+            document.getElementById('cardBackCameraInput').addEventListener('change', function(e) {
+                handleCardImage(e, 'back');
             });
+            document.getElementById('cardBackGalleryInput').addEventListener('change', function(e) {
+                handleCardImage(e, 'back');
+            });
+
+            // 大頭照
+            document.getElementById('avatarCameraInput').addEventListener('change', handleAvatarImage);
+            document.getElementById('avatarGalleryInput').addEventListener('change', handleAvatarImage);
         }
 
-        // 通知
+        function handleCardImage(e, side) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const imageData = evt.target.result;
+                const box = document.getElementById(side === 'front' ? 'cardFrontBox' : 'cardBackBox');
+                
+                if (side === 'front') {
+                    cardFrontImage = imageData;
+                    document.getElementById('recognizeBtn').disabled = false;
+                } else {
+                    cardBackImage = imageData;
+                }
+
+                box.innerHTML = '<img src="' + imageData + '" alt="名片' + (side === 'front' ? '正面' : '背面') + '">';
+                box.classList.add('has-image');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function handleAvatarImage(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                avatarImage = evt.target.result;
+                const preview = document.getElementById('avatarPreview');
+                preview.style.backgroundImage = 'url("' + avatarImage + '")';
+                preview.classList.add('has-image');
+                preview.textContent = '';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // ===== 拍照/選擇圖片 =====
+        function captureCard(side) {
+            document.getElementById(side === 'front' ? 'cardFrontCameraInput' : 'cardBackCameraInput').click();
+        }
+
+        function selectCard(side) {
+            document.getElementById(side === 'front' ? 'cardFrontGalleryInput' : 'cardBackGalleryInput').click();
+        }
+
+        function captureAvatar() {
+            document.getElementById('avatarCameraInput').click();
+        }
+
+        function selectAvatar() {
+            document.getElementById('avatarGalleryInput').click();
+        }
+
+        // ===== 通知 =====
         function showNotification(msg, isError) {
             const el = document.getElementById('notification');
             el.textContent = msg;
@@ -826,10 +981,10 @@
             setTimeout(function() { el.className = 'notification'; }, 3000);
         }
 
-        // 本地儲存
+        // ===== 本地儲存 =====
         function loadFromLocal() {
             try {
-                const saved = localStorage.getItem('businessCards_v3');
+                const saved = localStorage.getItem('businessCards_v4');
                 if (saved) {
                     cards = JSON.parse(saved);
                     console.log('載入本地資料:', cards.length, '筆');
@@ -842,14 +997,15 @@
 
         function saveToLocal() {
             try {
-                localStorage.setItem('businessCards_v3', JSON.stringify(cards));
-                console.log('已儲存到本地:', cards.length, '筆');
+                localStorage.setItem('businessCards_v4', JSON.stringify(cards));
+                console.log('已儲存:', cards.length, '筆');
             } catch (e) {
                 console.error('儲存失敗:', e);
+                showNotification('儲存失敗，可能空間不足', true);
             }
         }
 
-        // Google Sheets 同步
+        // ===== Google Sheets 同步（使用 JSONP 方式繞過 CORS）=====
         async function syncFromSheet() {
             const dot = document.getElementById('syncDot');
             const text = document.getElementById('syncText');
@@ -857,46 +1013,67 @@
             text.textContent = '同步中...';
 
             try {
-                const url = `https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/A:O?key=${CONFIG.VISION_API_KEY}`;
-                console.log('同步 URL:', url);
+                // 使用 Google Visualization API（支援 JSONP，無 CORS 問題）
+                const query = encodeURIComponent('SELECT *');
+                const url = 'https://docs.google.com/spreadsheets/d/' + CONFIG.SHEET_ID + '/gviz/tq?tq=' + query;
                 
                 const res = await fetch(url);
-                const data = await res.json();
-                console.log('同步結果:', data);
-
-                if (data.error) {
-                    throw new Error(data.error.message);
+                const textData = await res.text();
+                
+                // 解析 Google Visualization 回應
+                const jsonMatch = textData.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\);?$/);
+                if (!jsonMatch) {
+                    throw new Error('無法解析回應');
                 }
-
-                if (data.values && data.values.length > 1) {
-                    const newCards = data.values.slice(1).map(function(row, i) {
+                
+                const data = JSON.parse(jsonMatch[1]);
+                
+                if (data.table && data.table.rows) {
+                    const cols = data.table.cols;
+                    const rows = data.table.rows;
+                    
+                    const newCards = rows.map(function(row, i) {
+                        const getValue = function(idx) {
+                            return row.c[idx] && row.c[idx].v ? String(row.c[idx].v) : '';
+                        };
+                        
                         return {
-                            id: row[0] || String(Date.now() + i),
-                            name: row[1] || '',
-                            company: row[2] || '',
-                            title: row[3] || '',
-                            phone: row[4] || '',
-                            email: row[5] || '',
-                            lineId: row[6] || '',
-                            category: row[7] || '其他',
-                            address: row[8] || '',
-                            website: row[9] || '',
-                            notes: row[10] || '',
-                            fax: row[11] || '',
-                            mobile2: row[12] || '',
-                            cardImage: row[13] || '',
-                            avatar: row[14] || ''
+                            id: getValue(0) || String(Date.now() + i),
+                            name: getValue(1),
+                            nameEn: getValue(2),
+                            company: getValue(3),
+                            title: getValue(4),
+                            phone: getValue(5),
+                            email: getValue(6),
+                            lineId: getValue(7),
+                            category: getValue(8) || '其他',
+                            address: getValue(9),
+                            website: getValue(10),
+                            notes: getValue(11),
+                            cardFront: '',
+                            cardBack: '',
+                            avatar: ''
                         };
                     }).filter(function(c) { return c.name; });
 
                     if (newCards.length > 0) {
+                        // 合併圖片資料（保留本地圖片）
+                        newCards.forEach(function(newCard) {
+                            const existing = cards.find(function(c) { return c.id === newCard.id || c.name === newCard.name; });
+                            if (existing) {
+                                newCard.cardFront = existing.cardFront || '';
+                                newCard.cardBack = existing.cardBack || '';
+                                newCard.avatar = existing.avatar || '';
+                            }
+                        });
+                        
                         cards = newCards;
                         saveToLocal();
                         renderCards();
                         showNotification('✅ 同步成功！' + newCards.length + ' 筆');
+                    } else {
+                        showNotification('試算表沒有資料');
                     }
-                } else {
-                    showNotification('試算表沒有資料');
                 }
             } catch (err) {
                 console.error('同步錯誤:', err);
@@ -907,7 +1084,7 @@
             text.textContent = '本地';
         }
 
-        // 渲染名片
+        // ===== 渲染名片 =====
         function renderCards() {
             const grid = document.getElementById('cardsGrid');
             const search = document.getElementById('searchInput').value.toLowerCase();
@@ -915,6 +1092,7 @@
             const filtered = cards.filter(function(card) {
                 const matchSearch = !search || 
                     (card.name && card.name.toLowerCase().includes(search)) ||
+                    (card.nameEn && card.nameEn.toLowerCase().includes(search)) ||
                     (card.company && card.company.toLowerCase().includes(search)) ||
                     (card.lineId && card.lineId.toLowerCase().includes(search)) ||
                     (card.notes && card.notes.toLowerCase().includes(search));
@@ -922,7 +1100,6 @@
                 return matchSearch && matchCat;
             });
 
-            // 更新統計
             document.getElementById('totalCount').textContent = cards.length;
             document.getElementById('lineCount').textContent = cards.filter(function(c) { return c.lineId; }).length;
             document.getElementById('filterCount').textContent = filtered.length;
@@ -934,28 +1111,33 @@
             }
 
             grid.innerHTML = filtered.map(function(card) {
-                const avatarStyle = card.avatar ? 'background-image:url(\'' + card.avatar + '\');color:transparent;' : '';
+                const avatarStyle = card.avatar ? 'background-image:url("' + card.avatar + '");color:transparent;' : '';
+                const hasImages = card.cardFront || card.cardBack;
+                
                 return '<div class="card" onclick="openDetailModal(\'' + card.id + '\')">' +
-                    '<span class="card-category cat-' + card.category + '">' + card.category + '</span>' +
+                    '<span class="card-category cat-' + (card.category || '其他') + '">' + (card.category || '其他') + '</span>' +
                     '<div class="card-header">' +
-                        '<div class="card-avatar avatar-' + card.category + '" style="' + avatarStyle + '">' + (card.avatar ? '' : card.name.charAt(0)) + '</div>' +
-                        '<div><div class="card-name">' + escapeHtml(card.name) + '</div>' +
-                        '<div class="card-title">' + (escapeHtml(card.title) || '—') + '</div></div>' +
+                        '<div class="card-avatar avatar-' + (card.category || '其他') + '" style="' + avatarStyle + '">' + (card.avatar ? '' : (card.name ? card.name.charAt(0) : '?')) + '</div>' +
+                        '<div>' +
+                            '<div class="card-name">' + escapeHtml(card.name) + '</div>' +
+                            (card.nameEn ? '<div class="card-name-en">' + escapeHtml(card.nameEn) + '</div>' : '') +
+                            '<div class="card-title">' + (escapeHtml(card.title) || '—') + '</div>' +
+                        '</div>' +
                     '</div>' +
                     (card.company ? '<div class="card-company">🏢 ' + escapeHtml(card.company) + '</div>' : '') +
                     '<div class="card-contacts">' +
                         (card.phone ? '<div class="card-contact">📱 ' + escapeHtml(card.phone) + '</div>' : '') +
-                        (card.lineId ? '<div class="card-contact card-line">💬 LINE: ' + escapeHtml(card.lineId) + '</div>' : '') +
+                        (card.lineId ? '<div class="card-contact card-line">💬 ' + escapeHtml(card.lineId) + '</div>' : '') +
                     '</div>' +
-                    (card.notes ? '<div class="card-notes">📝 ' + escapeHtml(card.notes.substring(0, 40)) + '</div>' : '') +
-                    (card.cardImage ? '<div class="card-image-thumb" style="background-image:url(\'' + card.cardImage + '\')"></div>' : '') +
+                    (hasImages ? '<div class="card-images">' +
+                        (card.cardFront ? '<div class="card-image-thumb" style="background-image:url(\'' + card.cardFront + '\')"></div>' : '') +
+                        (card.cardBack ? '<div class="card-image-thumb" style="background-image:url(\'' + card.cardBack + '\')"></div>' : '') +
+                    '</div>' : '') +
                 '</div>';
             }).join('');
         }
 
-        function filterCards() {
-            renderCards();
-        }
+        function filterCards() { renderCards(); }
 
         function selectCategory(btn) {
             document.querySelectorAll('.category-btn').forEach(function(b) { b.classList.remove('active'); });
@@ -964,20 +1146,23 @@
             renderCards();
         }
 
-        // Modal 操作
+        // ===== Modal 操作 =====
         function openAddModal() {
             editingId = null;
             document.getElementById('modalTitle').textContent = '➕ 新增名片';
             clearForm();
             document.getElementById('addModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
         }
 
         function closeAddModal() {
             document.getElementById('addModal').classList.remove('active');
+            document.body.style.overflow = '';
         }
 
         function clearForm() {
             document.getElementById('cardName').value = '';
+            document.getElementById('cardNameEn').value = '';
             document.getElementById('cardCompany').value = '';
             document.getElementById('cardTitle').value = '';
             document.getElementById('cardPhone').value = '';
@@ -987,19 +1172,24 @@
             document.getElementById('cardAddress').value = '';
             document.getElementById('cardWebsite').value = '';
             document.getElementById('cardNotes').value = '';
-            document.getElementById('cardFax').value = '';
-            document.getElementById('cardMobile2').value = '';
-            document.getElementById('cameraPreview').classList.remove('active');
-            document.getElementById('ocrResult').classList.remove('active');
-            document.getElementById('recognizeBtn').disabled = true;
+            
+            // 重設圖片
+            cardFrontImage = null;
+            cardBackImage = null;
+            avatarImage = null;
+            
+            document.getElementById('cardFrontBox').innerHTML = '<span class="image-box-icon">📄</span><span class="image-box-label">正面</span>';
+            document.getElementById('cardFrontBox').classList.remove('has-image');
+            document.getElementById('cardBackBox').innerHTML = '<span class="image-box-icon">📄</span><span class="image-box-label">背面</span>';
+            document.getElementById('cardBackBox').classList.remove('has-image');
             document.getElementById('avatarPreview').style.backgroundImage = '';
             document.getElementById('avatarPreview').classList.remove('has-image');
             document.getElementById('avatarPreview').textContent = '👤';
-            currentImage = null;
-            currentAvatar = null;
+            document.getElementById('recognizeBtn').disabled = true;
+            document.getElementById('ocrResult').classList.remove('active');
         }
 
-        // 儲存名片
+        // ===== 儲存名片 =====
         function saveCard() {
             const name = document.getElementById('cardName').value.trim();
             if (!name) {
@@ -1010,6 +1200,7 @@
             const card = {
                 id: editingId || String(Date.now()),
                 name: name,
+                nameEn: document.getElementById('cardNameEn').value.trim(),
                 company: document.getElementById('cardCompany').value.trim(),
                 title: document.getElementById('cardTitle').value.trim(),
                 phone: document.getElementById('cardPhone').value.trim(),
@@ -1019,17 +1210,22 @@
                 address: document.getElementById('cardAddress').value.trim(),
                 website: document.getElementById('cardWebsite').value.trim(),
                 notes: document.getElementById('cardNotes').value.trim(),
-                fax: document.getElementById('cardFax').value.trim(),
-                mobile2: document.getElementById('cardMobile2').value.trim(),
-                cardImage: currentImage || '',
-                avatar: currentAvatar || ''
+                cardFront: cardFrontImage || '',
+                cardBack: cardBackImage || '',
+                avatar: avatarImage || ''
             };
 
-            console.log('儲存名片:', card);
+            console.log('儲存名片:', card.name);
 
             if (editingId) {
                 const idx = cards.findIndex(function(c) { return c.id === editingId; });
-                if (idx !== -1) cards[idx] = card;
+                if (idx !== -1) {
+                    // 保留原有圖片（如果沒有新上傳）
+                    if (!cardFrontImage && cards[idx].cardFront) card.cardFront = cards[idx].cardFront;
+                    if (!cardBackImage && cards[idx].cardBack) card.cardBack = cards[idx].cardBack;
+                    if (!avatarImage && cards[idx].avatar) card.avatar = cards[idx].avatar;
+                    cards[idx] = card;
+                }
                 showNotification('✅ 已更新！');
             } else {
                 cards.unshift(card);
@@ -1040,12 +1236,17 @@
             renderCards();
             closeAddModal();
 
-            // 複製到剪貼簿
+            // 複製到剪貼簿（方便手動貼到 Google Sheets）
             copyToClipboard(card);
         }
 
         function copyToClipboard(card) {
-            const data = [card.id, card.name, card.company, card.title, card.phone, card.email, card.lineId, card.category, card.address, card.website, card.notes, card.fax, card.mobile2].join('\t');
+            const data = [
+                card.id, card.name, card.nameEn, card.company, card.title, 
+                card.phone, card.email, card.lineId, card.category, 
+                card.address, card.website, card.notes
+            ].join('\t');
+            
             navigator.clipboard.writeText(data).then(function() {
                 console.log('已複製到剪貼簿');
             }).catch(function(e) {
@@ -1053,26 +1254,40 @@
             });
         }
 
-        // 詳細頁
+        // ===== 詳細頁 =====
         function openDetailModal(id) {
             const card = cards.find(function(c) { return c.id === id; });
             if (!card) return;
 
-            const avatarStyle = card.avatar ? 'background-image:url(\'' + card.avatar + '\');color:transparent;' : '';
+            const avatarStyle = card.avatar ? 'background-image:url("' + card.avatar + '");color:transparent;' : '';
+            const hasImages = card.cardFront || card.cardBack;
             
+            let imagesHtml = '';
+            if (hasImages) {
+                imagesHtml = '<div class="detail-images">';
+                if (card.cardFront) {
+                    imagesHtml += '<div class="detail-image"><img src="' + card.cardFront + '" alt="正面"><div class="detail-image-label">正面</div></div>';
+                }
+                if (card.cardBack) {
+                    imagesHtml += '<div class="detail-image"><img src="' + card.cardBack + '" alt="背面"><div class="detail-image-label">背面</div></div>';
+                }
+                imagesHtml += '</div>';
+            }
+
             document.getElementById('detailContent').innerHTML = 
-                (card.cardImage ? '<img src="' + card.cardImage + '" class="detail-card-image">' : '') +
+                imagesHtml +
                 '<div class="detail-header">' +
-                    '<div class="detail-avatar avatar-' + card.category + '" style="' + avatarStyle + '">' + (card.avatar ? '' : card.name.charAt(0)) + '</div>' +
-                    '<div class="detail-info"><h2>' + escapeHtml(card.name) + '</h2>' +
-                    '<p>' + (escapeHtml(card.title) || '—') + '</p>' +
-                    '<span class="detail-category cat-' + card.category + '">' + card.category + '</span></div>' +
+                    '<div class="detail-avatar avatar-' + (card.category || '其他') + '" style="' + avatarStyle + '">' + (card.avatar ? '' : card.name.charAt(0)) + '</div>' +
+                    '<div class="detail-info">' +
+                        '<h2>' + escapeHtml(card.name) + '</h2>' +
+                        (card.nameEn ? '<div class="name-en">' + escapeHtml(card.nameEn) + '</div>' : '') +
+                        '<p>' + (escapeHtml(card.title) || '—') + '</p>' +
+                        '<span class="detail-category cat-' + (card.category || '其他') + '">' + (card.category || '其他') + '</span>' +
+                    '</div>' +
                 '</div>' +
                 '<div class="detail-section">' +
                     (card.company ? '<div class="detail-row"><span class="detail-row-icon">🏢</span><span class="detail-row-label">公司</span><span class="detail-row-value">' + escapeHtml(card.company) + '</span></div>' : '') +
                     (card.phone ? '<div class="detail-row"><span class="detail-row-icon">📱</span><span class="detail-row-label">電話</span><span class="detail-row-value"><a href="tel:' + card.phone + '">' + escapeHtml(card.phone) + '</a></span></div>' : '') +
-                    (card.mobile2 ? '<div class="detail-row"><span class="detail-row-icon">📱</span><span class="detail-row-label">手機2</span><span class="detail-row-value"><a href="tel:' + card.mobile2 + '">' + escapeHtml(card.mobile2) + '</a></span></div>' : '') +
-                    (card.fax ? '<div class="detail-row"><span class="detail-row-icon">📠</span><span class="detail-row-label">傳真</span><span class="detail-row-value">' + escapeHtml(card.fax) + '</span></div>' : '') +
                     (card.lineId ? '<div class="detail-row"><span class="detail-row-icon">💬</span><span class="detail-row-label">LINE</span><span class="detail-row-value line"><a href="https://line.me/ti/p/~' + card.lineId + '" target="_blank">' + escapeHtml(card.lineId) + '</a></span></div>' : '') +
                     (card.email ? '<div class="detail-row"><span class="detail-row-icon">✉️</span><span class="detail-row-label">Email</span><span class="detail-row-value"><a href="mailto:' + card.email + '">' + escapeHtml(card.email) + '</a></span></div>' : '') +
                     (card.address ? '<div class="detail-row"><span class="detail-row-icon">📍</span><span class="detail-row-label">地址</span><span class="detail-row-value">' + escapeHtml(card.address) + '</span></div>' : '') +
@@ -1085,10 +1300,12 @@
                 '</div>';
 
             document.getElementById('detailModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
         }
 
         function closeDetailModal() {
             document.getElementById('detailModal').classList.remove('active');
+            document.body.style.overflow = '';
         }
 
         function openEditModal(id) {
@@ -1097,7 +1314,9 @@
 
             editingId = id;
             document.getElementById('modalTitle').textContent = '✏️ 編輯名片';
+            
             document.getElementById('cardName').value = card.name || '';
+            document.getElementById('cardNameEn').value = card.nameEn || '';
             document.getElementById('cardCompany').value = card.company || '';
             document.getElementById('cardTitle').value = card.title || '';
             document.getElementById('cardPhone').value = card.phone || '';
@@ -1107,24 +1326,29 @@
             document.getElementById('cardAddress').value = card.address || '';
             document.getElementById('cardWebsite').value = card.website || '';
             document.getElementById('cardNotes').value = card.notes || '';
-            document.getElementById('cardFax').value = card.fax || '';
-            document.getElementById('cardMobile2').value = card.mobile2 || '';
 
-            if (card.cardImage) {
-                currentImage = card.cardImage;
-                document.getElementById('cameraPreview').src = card.cardImage;
-                document.getElementById('cameraPreview').classList.add('active');
+            // 顯示現有圖片
+            if (card.cardFront) {
+                cardFrontImage = card.cardFront;
+                document.getElementById('cardFrontBox').innerHTML = '<img src="' + card.cardFront + '" alt="正面">';
+                document.getElementById('cardFrontBox').classList.add('has-image');
+                document.getElementById('recognizeBtn').disabled = false;
             }
-
+            if (card.cardBack) {
+                cardBackImage = card.cardBack;
+                document.getElementById('cardBackBox').innerHTML = '<img src="' + card.cardBack + '" alt="背面">';
+                document.getElementById('cardBackBox').classList.add('has-image');
+            }
             if (card.avatar) {
-                currentAvatar = card.avatar;
-                document.getElementById('avatarPreview').style.backgroundImage = 'url(\'' + card.avatar + '\')';
+                avatarImage = card.avatar;
+                document.getElementById('avatarPreview').style.backgroundImage = 'url("' + card.avatar + '")';
                 document.getElementById('avatarPreview').classList.add('has-image');
                 document.getElementById('avatarPreview').textContent = '';
             }
 
             closeDetailModal();
             document.getElementById('addModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
         }
 
         function deleteCard(id) {
@@ -1136,16 +1360,16 @@
             showNotification('🗑️ 已刪除');
         }
 
-        // OCR 辨識
+        // ===== OCR 辨識 =====
         async function recognizeCard() {
-            if (!currentImage) return;
+            if (!cardFrontImage) return;
 
             const btn = document.getElementById('recognizeBtn');
             btn.disabled = true;
-            btn.innerHTML = '<span class="loading"></span> 辨識中';
+            btn.innerHTML = '<span class="loading"></span>';
 
             try {
-                const base64 = currentImage.split(',')[1];
+                const base64 = cardFrontImage.split(',')[1];
                 const res = await fetch('https://vision.googleapis.com/v1/images:annotate?key=' + CONFIG.VISION_API_KEY, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -1180,89 +1404,191 @@
             btn.innerHTML = '🔍 辨識';
         }
 
-        // 解析名片
+        // ===== 解析名片（加強姓名辨識）=====
         function parseBusinessCard(text) {
             const lines = text.split('\n').map(function(l) { return l.trim(); }).filter(function(l) { return l; });
+            const allText = text;
+            
+            // 儲存已使用的行
+            let usedLines = [];
 
-            // Email
-            const emailMatch = text.match(/[\w.-]+@[\w.-]+\.\w+/);
-            if (emailMatch) document.getElementById('cardEmail').value = emailMatch[0];
+            // ===== Email =====
+            const emailMatch = allText.match(/[\w.-]+@[\w.-]+\.\w+/);
+            if (emailMatch) {
+                document.getElementById('cardEmail').value = emailMatch[0];
+            }
 
-            // 電話
-            const phoneMatch = text.match(/09\d{2}[-\s]?\d{3}[-\s]?\d{3}|0\d[-\s]?\d{4}[-\s]?\d{4}|\(\d{2,3}\)[-\s]?\d{3,4}[-\s]?\d{3,4}/);
-            if (phoneMatch) document.getElementById('cardPhone').value = phoneMatch[0];
+            // ===== 電話（多種格式）=====
+            const phonePatterns = [
+                /09\d{2}[-\s]?\d{3}[-\s]?\d{3}/g,
+                /0\d{1,2}[-\s]?\d{3,4}[-\s]?\d{3,4}/g,
+                /\(\d{2,3}\)[-\s]?\d{3,4}[-\s]?\d{3,4}/g,
+                /\+886[-\s]?\d+[-\s]?\d+[-\s]?\d+/g
+            ];
+            
+            for (var p = 0; p < phonePatterns.length; p++) {
+                const match = allText.match(phonePatterns[p]);
+                if (match) {
+                    document.getElementById('cardPhone').value = match[0];
+                    break;
+                }
+            }
 
-            // 傳真
-            const faxMatch = text.match(/(?:傳真|FAX|Fax)[:\s]*([0-9\-\s()]+)/i);
-            if (faxMatch) document.getElementById('cardFax').value = faxMatch[1].trim();
+            // ===== LINE ID =====
+            const lineMatch = allText.match(/(?:LINE|Line|line)[\s:：ID]*([\w._-]+)/i);
+            if (lineMatch && lineMatch[1] && lineMatch[1].length > 2) {
+                document.getElementById('cardLine').value = lineMatch[1];
+            }
 
-            // LINE
-            const lineMatch = text.match(/(?:LINE|Line|line)[\s:：ID]*([\w._-]+)/i);
-            if (lineMatch && lineMatch[1].length > 2) document.getElementById('cardLine').value = lineMatch[1];
+            // ===== 網站 =====
+            const webMatch = allText.match(/(?:www\.[\w.-]+\.\w+)|(?:https?:\/\/[\w.-]+)/i);
+            if (webMatch) {
+                document.getElementById('cardWebsite').value = webMatch[0];
+            }
 
-            // 網站
-            const webMatch = text.match(/(?:www\.[\w.-]+\.\w+)|(?:https?:\/\/[\w.-]+)/i);
-            if (webMatch) document.getElementById('cardWebsite').value = webMatch[0];
-
-            // 公司 - 加強版
-            const companyKeywords = ['公司', '企業', '有限', '股份', '集團', '工作室', '事務所', '診所', '醫院', '銀行', '學院', '大學', '協會', '基金會', '商行', '工廠', '實業', '科技', '顧問', 'Co.', 'Corp', 'Inc', 'Ltd', 'LLC'];
+            // ===== 公司（加強）=====
+            const companyKeywords = [
+                '股份有限公司', '有限公司', '公司', '企業', '集團', 
+                '事務所', '工作室', '診所', '醫院', '銀行', '證券',
+                '學院', '大學', '學校', '協會', '基金會', '商行',
+                '工廠', '實業', '科技', '顧問', '設計', '國際',
+                'Co.', 'Corp', 'Inc', 'Ltd', 'LLC', 'Company', 'Group'
+            ];
+            
             for (var i = 0; i < lines.length; i++) {
+                var line = lines[i];
                 for (var j = 0; j < companyKeywords.length; j++) {
-                    if (lines[i].includes(companyKeywords[j])) {
-                        document.getElementById('cardCompany').value = lines[i];
+                    if (line.includes(companyKeywords[j])) {
+                        document.getElementById('cardCompany').value = line;
+                        usedLines.push(line);
                         break;
                     }
                 }
                 if (document.getElementById('cardCompany').value) break;
             }
 
-            // 職稱
-            const titleKeywords = ['經理', '總監', '主管', '專員', '業務', '工程師', '設計師', '總裁', '董事', '總經理', '副總', '協理', '課長', '組長', '會計', '秘書', '助理', '顧問', '律師', '醫師', '會計師', 'Director', 'Manager', 'CEO', 'Engineer'];
+            // ===== 職稱 =====
+            const titleKeywords = [
+                '董事長', '總經理', '副總', '協理', '經理', '副理', '襄理',
+                '總監', '主管', '專員', '組長', '課長', '店長', '廠長',
+                '工程師', '設計師', '建築師', '會計師', '律師', '醫師', '藥師',
+                '顧問', '業務', '秘書', '助理', '總裁', '執行長',
+                'CEO', 'CTO', 'CFO', 'COO', 'VP', 'Director', 'Manager', 
+                'Engineer', 'Designer', 'Consultant', 'President'
+            ];
+            
             for (var i = 0; i < lines.length; i++) {
-                if (lines[i] === document.getElementById('cardCompany').value) continue;
+                var line = lines[i];
+                if (usedLines.includes(line)) continue;
+                
                 for (var j = 0; j < titleKeywords.length; j++) {
-                    if (lines[i].includes(titleKeywords[j])) {
-                        document.getElementById('cardTitle').value = lines[i];
+                    if (line.includes(titleKeywords[j])) {
+                        document.getElementById('cardTitle').value = line;
+                        usedLines.push(line);
                         break;
                     }
                 }
                 if (document.getElementById('cardTitle').value) break;
             }
 
-            // 姓名
+            // ===== 姓名（大幅加強）=====
+            // 中文姓名特徵：2-4個中文字，常見姓氏開頭
+            const commonSurnames = ['陳', '林', '黃', '張', '李', '王', '吳', '劉', '蔡', '楊', 
+                '許', '鄭', '謝', '郭', '洪', '曾', '邱', '廖', '賴', '周', '徐', '蘇', '葉',
+                '莊', '呂', '江', '何', '蕭', '羅', '高', '潘', '簡', '朱', '鍾', '游', '詹',
+                '彭', '施', '沈', '余', '盧', '梁', '趙', '顏', '柯', '翁', '魏', '孫', '戴',
+                '范', '方', '宋', '鄧', '杜', '傅', '侯', '曹', '薛', '丁', '卓', '馬', '阮',
+                '董', '温', '唐', '藍', '石', '蔣', '古', '紀', '姚', '連', '馮', '歐', '程',
+                '湯', '黎', '田', '康', '鄒', '白', '涂', '尤', '巫', '韓', '龔', '嚴', '袁'];
+            
+            let foundChineseName = false;
+            
+            // 第一優先：找常見姓氏開頭的 2-4 字中文名
             for (var i = 0; i < lines.length; i++) {
                 var line = lines[i];
-                if (line === document.getElementById('cardCompany').value) continue;
-                if (line === document.getElementById('cardTitle').value) continue;
+                if (usedLines.includes(line)) continue;
                 if (line.includes('@') || line.includes('www') || line.match(/\d{4,}/)) continue;
+                
+                // 純中文 2-4 字
                 if (/^[\u4e00-\u9fa5]{2,4}$/.test(line)) {
-                    document.getElementById('cardName').value = line;
+                    // 檢查是否以常見姓氏開頭
+                    const firstChar = line.charAt(0);
+                    if (commonSurnames.includes(firstChar)) {
+                        document.getElementById('cardName').value = line;
+                        usedLines.push(line);
+                        foundChineseName = true;
+                        break;
+                    }
+                }
+            }
+            
+            // 第二優先：任何 2-4 字純中文（可能是較少見的姓）
+            if (!foundChineseName) {
+                for (var i = 0; i < lines.length; i++) {
+                    var line = lines[i];
+                    if (usedLines.includes(line)) continue;
+                    if (line.includes('@') || line.includes('www') || line.match(/\d{4,}/)) continue;
+                    
+                    if (/^[\u4e00-\u9fa5]{2,4}$/.test(line)) {
+                        document.getElementById('cardName').value = line;
+                        usedLines.push(line);
+                        foundChineseName = true;
+                        break;
+                    }
+                }
+            }
+
+            // ===== 英文名 =====
+            // 找英文名（通常是 2-3 個英文單字）
+            const englishNamePattern = /^[A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2}$/;
+            for (var i = 0; i < lines.length; i++) {
+                var line = lines[i];
+                if (usedLines.includes(line)) continue;
+                if (line.includes('@') || line.includes('www') || line.includes('.com')) continue;
+                
+                // 符合英文名格式（首字大寫）
+                if (englishNamePattern.test(line) && line.length > 3 && line.length < 30) {
+                    document.getElementById('cardNameEn').value = line;
+                    usedLines.push(line);
                     break;
                 }
             }
 
-            // 地址
+            // ===== 地址 =====
+            const addressKeywords = ['市', '縣', '區', '鄉', '鎮', '路', '街', '巷', '弄', '號', '樓'];
             for (var i = 0; i < lines.length; i++) {
                 var line = lines[i];
-                if ((line.includes('市') || line.includes('縣')) && (line.includes('區') || line.includes('路') || line.includes('街'))) {
+                var matchCount = 0;
+                for (var j = 0; j < addressKeywords.length; j++) {
+                    if (line.includes(addressKeywords[j])) matchCount++;
+                }
+                if (matchCount >= 3) {
                     document.getElementById('cardAddress').value = line;
                     break;
                 }
             }
         }
 
-        // 工具
+        // ===== 工具 =====
         function escapeHtml(str) {
             if (!str) return '';
             return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
         }
 
-        // 鍵盤
+        // ===== 鍵盤事件 =====
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
                 closeAddModal();
                 closeDetailModal();
             }
+        });
+
+        // ===== 點擊背景關閉 =====
+        document.getElementById('addModal').addEventListener('click', function(e) {
+            if (e.target === this) closeAddModal();
+        });
+        document.getElementById('detailModal').addEventListener('click', function(e) {
+            if (e.target === this) closeDetailModal();
         });
     </script>
 </body>
