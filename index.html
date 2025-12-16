@@ -21,6 +21,7 @@
             --border: rgba(255,255,255,0.1);
             --danger: #ef4444;
             --success: #22c55e;
+            --warning: #f59e0b;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -79,7 +80,6 @@
             align-items: center;
             justify-content: center;
             font-size: 20px;
-            box-shadow: 0 4px 15px rgba(6, 214, 160, 0.3);
         }
 
         .logo-text h1 { font-size: 18px; font-weight: 700; }
@@ -108,7 +108,6 @@
         .btn-primary {
             background: linear-gradient(135deg, var(--primary), var(--primary-dark));
             color: white;
-            box-shadow: 0 4px 15px rgba(6, 214, 160, 0.3);
         }
 
         .btn-secondary {
@@ -129,10 +128,7 @@
             justify-content: center;
         }
 
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
         .search-section {
             display: flex;
@@ -172,6 +168,7 @@
             display: flex;
             gap: 6px;
             flex-wrap: wrap;
+            align-items: center;
         }
 
         .category-btn {
@@ -190,6 +187,16 @@
             color: white;
             border-color: transparent;
             font-weight: 600;
+        }
+
+        .category-manage-btn {
+            padding: 6px 10px;
+            border-radius: 16px;
+            font-size: 12px;
+            cursor: pointer;
+            background: rgba(255,255,255,0.05);
+            color: var(--text-muted);
+            border: 1px dashed var(--border);
         }
 
         .main {
@@ -248,6 +255,8 @@
             border-radius: 10px;
             font-size: 10px;
             font-weight: 600;
+            background: rgba(255,255,255,0.1);
+            color: var(--text-secondary);
         }
 
         .card-header {
@@ -266,6 +275,8 @@
             justify-content: center;
             font-size: 20px;
             font-weight: 700;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
             background-size: cover;
             background-position: center;
             flex-shrink: 0;
@@ -301,21 +312,6 @@
             background-position: center;
             border: 1px solid var(--border);
         }
-
-        /* 分類顏色 */
-        .cat-客戶 { background: #fef3c7; color: #92400e; }
-        .cat-供應商 { background: #dbeafe; color: #1e40af; }
-        .cat-合作夥伴 { background: #dcfce7; color: #166534; }
-        .cat-同事 { background: #fae8ff; color: #86198f; }
-        .cat-朋友 { background: #ffedd5; color: #9a3412; }
-        .cat-其他 { background: #f1f5f9; color: #334155; }
-
-        .avatar-客戶 { background: linear-gradient(135deg, #f59e0b, #fef3c7); color: #92400e; }
-        .avatar-供應商 { background: linear-gradient(135deg, #3b82f6, #dbeafe); color: #1e40af; }
-        .avatar-合作夥伴 { background: linear-gradient(135deg, #22c55e, #dcfce7); color: #166534; }
-        .avatar-同事 { background: linear-gradient(135deg, #d946ef, #fae8ff); color: #86198f; }
-        .avatar-朋友 { background: linear-gradient(135deg, #f97316, #ffedd5); color: #9a3412; }
-        .avatar-其他 { background: linear-gradient(135deg, #64748b, #f1f5f9); color: #334155; }
 
         /* Modal */
         .modal-overlay {
@@ -385,6 +381,18 @@
         .form-input.highlight { background: rgba(6, 214, 160, 0.1); border-color: rgba(6, 214, 160, 0.3); }
         textarea.form-input { resize: vertical; min-height: 60px; }
 
+        .form-input-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .form-input-row .form-input { flex: 1; }
+
+        .form-input-row .btn {
+            padding: 10px 12px;
+            flex-shrink: 0;
+        }
+
         .form-actions {
             display: flex;
             gap: 10px;
@@ -429,7 +437,6 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            cursor: pointer;
             overflow: hidden;
             position: relative;
         }
@@ -504,7 +511,6 @@
             background-position: center;
             border: 2px dashed var(--border);
             flex-shrink: 0;
-            cursor: pointer;
         }
 
         .avatar-preview.has-image { border-style: solid; border-color: var(--primary); }
@@ -528,20 +534,75 @@
             font-family: inherit;
         }
 
-        /* OCR 結果 */
+        /* OCR 結果 - 可選擇欄位 */
         .ocr-result {
             margin-top: 10px;
-            padding: 10px;
+            padding: 12px;
             background: rgba(6, 214, 160, 0.1);
             border-radius: 8px;
             border: 1px solid rgba(6, 214, 160, 0.2);
-            font-size: 11px;
             display: none;
         }
 
         .ocr-result.active { display: block; }
-        .ocr-result h4 { color: var(--primary); margin-bottom: 6px; font-size: 12px; }
-        .ocr-text { color: var(--text-secondary); line-height: 1.4; white-space: pre-wrap; max-height: 100px; overflow-y: auto; font-size: 11px; }
+        
+        .ocr-result h4 { 
+            color: var(--primary); 
+            margin-bottom: 8px; 
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .ocr-lines {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .ocr-line {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px;
+            margin-bottom: 6px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
+        .ocr-line-text {
+            flex: 1;
+            word-break: break-all;
+        }
+
+        .ocr-line-btns {
+            display: flex;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+
+        .ocr-field-btn {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            border: none;
+            cursor: pointer;
+            font-family: inherit;
+            background: rgba(255,255,255,0.1);
+            color: var(--text-secondary);
+            transition: all 0.2s;
+        }
+
+        .ocr-field-btn:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .ocr-field-btn.used {
+            background: var(--success);
+            color: white;
+        }
 
         /* 詳細頁 */
         .detail-header { display: flex; gap: 12px; margin-bottom: 14px; }
@@ -555,6 +616,8 @@
             justify-content: center;
             font-size: 28px;
             font-weight: 700;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
             background-size: cover;
             background-position: center;
             flex-shrink: 0;
@@ -571,6 +634,7 @@
             font-size: 10px;
             font-weight: 600;
             margin-top: 5px;
+            background: rgba(255,255,255,0.1);
         }
 
         .detail-images {
@@ -669,10 +733,8 @@
         .sync-dot.syncing { background: var(--accent); animation: pulse 1s infinite; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
-        /* 隱藏的 input */
         .hidden-input { display: none; }
 
-        /* 載入遮罩 */
         .loading-overlay {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -689,12 +751,54 @@
         .loading-overlay .loading { width: 40px; height: 40px; border-width: 3px; }
         .loading-overlay p { color: var(--text-secondary); font-size: 14px; }
 
+        /* 分類管理 Modal */
+        .category-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .category-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 12px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .category-item-name {
+            font-size: 14px;
+        }
+
+        .category-item-delete {
+            padding: 4px 8px;
+            background: rgba(239, 68, 68, 0.1);
+            border: none;
+            border-radius: 4px;
+            color: #f87171;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .add-category-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .add-category-row input {
+            flex: 1;
+        }
+
         @media (max-width: 480px) {
             .header-top { flex-wrap: wrap; }
             .form-row { grid-template-columns: 1fr; }
             .cards-grid { grid-template-columns: 1fr; }
             .avatar-section { flex-direction: column; text-align: center; }
             .avatar-btns { justify-content: center; }
+            .ocr-line { flex-direction: column; align-items: flex-start; }
+            .ocr-line-btns { margin-top: 6px; flex-wrap: wrap; }
         }
     </style>
 </head>
@@ -705,7 +809,6 @@
         <p id="loadingText">載入中...</p>
     </div>
 
-    <!-- 隱藏的 file inputs -->
     <input type="file" id="cardFrontCameraInput" class="hidden-input" accept="image/*" capture="environment">
     <input type="file" id="cardFrontGalleryInput" class="hidden-input" accept="image/*">
     <input type="file" id="cardBackCameraInput" class="hidden-input" accept="image/*" capture="environment">
@@ -719,7 +822,7 @@
                 <div class="logo-icon">📇</div>
                 <div class="logo-text">
                     <h1>名片管理中心</h1>
-                    <p>☁️ 雲端同步版</p>
+                    <p>☁️ 雲端同步版 v6</p>
                 </div>
             </div>
             <div class="header-actions">
@@ -758,7 +861,7 @@
         <div class="cards-grid" id="cardsGrid"></div>
     </main>
 
-    <!-- 新增 Modal -->
+    <!-- 新增/編輯 Modal -->
     <div class="modal-overlay" id="addModal">
         <div class="modal">
             <div class="modal-header">
@@ -766,7 +869,6 @@
                 <button class="modal-close" onclick="closeAddModal()">✕</button>
             </div>
 
-            <!-- 名片照片區 -->
             <div class="image-section">
                 <div class="image-section-title">📸 名片照片</div>
                 <div class="image-row">
@@ -788,13 +890,14 @@
                     <button type="button" class="image-btn camera" onclick="captureCard('back')">📷 拍背面</button>
                     <button type="button" class="image-btn gallery" onclick="selectCard('back')">🖼️ 選背面</button>
                 </div>
+                
+                <!-- OCR 結果 - 可選擇填入欄位 -->
                 <div class="ocr-result" id="ocrResult">
-                    <h4>📝 辨識結果</h4>
-                    <div class="ocr-text" id="ocrText"></div>
+                    <h4>📝 點擊按鈕填入對應欄位</h4>
+                    <div class="ocr-lines" id="ocrLines"></div>
                 </div>
             </div>
 
-            <!-- 大頭照區 -->
             <div class="avatar-section">
                 <div class="avatar-preview" id="avatarPreview">👤</div>
                 <div class="avatar-info">
@@ -807,7 +910,6 @@
                 </div>
             </div>
 
-            <!-- 表單 -->
             <div class="form-row">
                 <div class="form-group">
                     <label class="form-label">👤 姓名（中文）*</label>
@@ -825,14 +927,10 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label">📁 分類</label>
-                    <select class="form-input" id="cardCategory">
-                        <option value="客戶">客戶</option>
-                        <option value="供應商">供應商</option>
-                        <option value="合作夥伴">合作夥伴</option>
-                        <option value="同事">同事</option>
-                        <option value="朋友">朋友</option>
-                        <option value="其他">其他</option>
-                    </select>
+                    <div class="form-input-row">
+                        <select class="form-input" id="cardCategory"></select>
+                        <button type="button" class="btn btn-secondary" onclick="openCategoryModal()">⚙️</button>
+                    </div>
                 </div>
             </div>
             <div class="form-group">
@@ -883,32 +981,148 @@
         </div>
     </div>
 
+    <!-- 分類管理 Modal -->
+    <div class="modal-overlay" id="categoryModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>⚙️ 管理分類</h2>
+                <button class="modal-close" onclick="closeCategoryModal()">✕</button>
+            </div>
+            <div class="category-list" id="categoryList"></div>
+            <div class="add-category-row">
+                <input type="text" class="form-input" id="newCategoryInput" placeholder="輸入新分類名稱...">
+                <button class="btn btn-primary" onclick="addNewCategory()">➕ 新增</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // ===== API 設定 =====
         const API_URL = 'https://script.google.com/macros/s/AKfycbxsDT1GpMUWkLTh8HQIB6QMVOM6aMXS2IvBy1hpWy_y5mgyOakb__p0XQm1cn2q6N0LVQ/exec';
 
-        const CATEGORIES = ['全部', '客戶', '供應商', '合作夥伴', '同事', '朋友', '其他'];
-
         // ===== 全域變數 =====
         let cards = [];
+        let categories = ['客戶', '供應商', '合作夥伴', '同事', '朋友', '其他'];
         let currentCategory = '全部';
-        let cardFrontImage = null;  // base64
-        let cardBackImage = null;   // base64
-        let avatarImage = null;     // base64
-        let cardFrontUrl = '';      // Drive URL
-        let cardBackUrl = '';       // Drive URL
-        let avatarUrl = '';         // Drive URL
+        let cardFrontImage = null;
+        let cardBackImage = null;
+        let avatarImage = null;
+        let cardFrontUrl = '';
+        let cardBackUrl = '';
+        let avatarUrl = '';
         let editingId = null;
+        let ocrLines = [];
 
         // ===== 初始化 =====
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('App v5 初始化...');
-            initCategories();
+            console.log('App v6 初始化...');
             initFileInputs();
             loadFromLocal();
-            renderCards();
+            loadCategories();
             syncFromCloud();
         });
+
+        // ===== 載入分類 =====
+        async function loadCategories() {
+            try {
+                var response = await fetch(API_URL + '?type=categories');
+                var result = await response.json();
+                if (result.success && result.categories) {
+                    categories = result.categories;
+                    localStorage.setItem('categories_v6', JSON.stringify(categories));
+                }
+            } catch (err) {
+                console.error('載入分類失敗:', err);
+                var saved = localStorage.getItem('categories_v6');
+                if (saved) {
+                    categories = JSON.parse(saved);
+                }
+            }
+            renderCategoryButtons();
+            renderCategorySelect();
+        }
+
+        function renderCategoryButtons() {
+            var container = document.getElementById('categories');
+            var btns = '<button class="category-btn active" data-cat="全部" onclick="selectCategory(this)">全部</button>';
+            for (var i = 0; i < categories.length; i++) {
+                btns += '<button class="category-btn" data-cat="' + categories[i] + '" onclick="selectCategory(this)">' + categories[i] + '</button>';
+            }
+            btns += '<button class="category-manage-btn" onclick="openCategoryModal()">⚙️</button>';
+            container.innerHTML = btns;
+        }
+
+        function renderCategorySelect() {
+            var select = document.getElementById('cardCategory');
+            select.innerHTML = categories.map(function(c) {
+                return '<option value="' + c + '">' + c + '</option>';
+            }).join('');
+        }
+
+        // ===== 分類管理 =====
+        function openCategoryModal() {
+            renderCategoryList();
+            document.getElementById('categoryModal').classList.add('active');
+            document.getElementById('newCategoryInput').value = '';
+        }
+
+        function closeCategoryModal() {
+            document.getElementById('categoryModal').classList.remove('active');
+        }
+
+        function renderCategoryList() {
+            var list = document.getElementById('categoryList');
+            list.innerHTML = categories.map(function(c) {
+                return '<div class="category-item">' +
+                    '<span class="category-item-name">' + escapeHtml(c) + '</span>' +
+                    '<button class="category-item-delete" onclick="deleteCategory(\'' + escapeHtml(c) + '\')">🗑️</button>' +
+                '</div>';
+            }).join('');
+        }
+
+        async function addNewCategory() {
+            var input = document.getElementById('newCategoryInput');
+            var name = input.value.trim();
+            if (!name) {
+                showNotification('請輸入分類名稱', 'error');
+                return;
+            }
+
+            showLoading('新增分類...');
+            try {
+                var result = await apiCall('addCategory', { category: name });
+                if (result.success) {
+                    showNotification('✅ 分類已新增', 'success');
+                    input.value = '';
+                    await loadCategories();
+                    renderCategoryList();
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (err) {
+                showNotification('新增失敗: ' + err.message, 'error');
+            }
+            hideLoading();
+        }
+
+        async function deleteCategory(name) {
+            if (!confirm('確定刪除「' + name + '」分類？')) return;
+
+            showLoading('刪除分類...');
+            try {
+                var result = await apiCall('deleteCategory', { category: name });
+                if (result.success) {
+                    showNotification('✅ 分類已刪除', 'success');
+                    await loadCategories();
+                    renderCategoryList();
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (err) {
+                showNotification('刪除失敗: ' + err.message, 'error');
+            }
+            hideLoading();
+        }
 
         // ===== 顯示/隱藏載入中 =====
         function showLoading(text) {
@@ -920,23 +1134,12 @@
             document.getElementById('loadingOverlay').classList.remove('active');
         }
 
-        // ===== Reload =====
         function reloadApp() {
             showNotification('🔄 重新整理中...');
-            setTimeout(function() {
-                location.reload();
-            }, 300);
+            setTimeout(function() { location.reload(); }, 300);
         }
 
-        // ===== 初始化分類 =====
-        function initCategories() {
-            var container = document.getElementById('categories');
-            container.innerHTML = CATEGORIES.map(function(cat) {
-                return '<button class="category-btn ' + (cat === '全部' ? 'active' : '') + '" data-cat="' + cat + '" onclick="selectCategory(this)">' + cat + '</button>';
-            }).join('');
-        }
-
-        // ===== 初始化檔案輸入 =====
+        // ===== 檔案輸入 =====
         function initFileInputs() {
             document.getElementById('cardFrontCameraInput').addEventListener('change', function(e) { handleCardImage(e, 'front'); });
             document.getElementById('cardFrontGalleryInput').addEventListener('change', function(e) { handleCardImage(e, 'front'); });
@@ -946,7 +1149,6 @@
             document.getElementById('avatarGalleryInput').addEventListener('change', handleAvatarImage);
         }
 
-        // ===== 壓縮圖片 =====
         function compressImage(file, maxWidth, quality, callback) {
             var reader = new FileReader();
             reader.onload = function(e) {
@@ -958,8 +1160,7 @@
                     canvas.height = img.height * ratio;
                     var ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    var dataUrl = canvas.toDataURL('image/jpeg', quality);
-                    callback(dataUrl);
+                    callback(canvas.toDataURL('image/jpeg', quality));
                 };
                 img.src = e.target.result;
             };
@@ -972,14 +1173,14 @@
 
             compressImage(file, 1200, 0.8, function(dataUrl) {
                 var box = document.getElementById(side === 'front' ? 'cardFrontBox' : 'cardBackBox');
-                
                 if (side === 'front') {
                     cardFrontImage = dataUrl;
+                    cardFrontUrl = '';
                     document.getElementById('recognizeBtn').disabled = false;
                 } else {
                     cardBackImage = dataUrl;
+                    cardBackUrl = '';
                 }
-
                 box.innerHTML = '<img src="' + dataUrl + '" alt="名片">';
                 box.classList.add('has-image');
             });
@@ -991,6 +1192,7 @@
 
             compressImage(file, 400, 0.8, function(dataUrl) {
                 avatarImage = dataUrl;
+                avatarUrl = '';
                 var preview = document.getElementById('avatarPreview');
                 preview.style.backgroundImage = 'url("' + dataUrl + '")';
                 preview.classList.add('has-image');
@@ -998,21 +1200,10 @@
             });
         }
 
-        function captureCard(side) {
-            document.getElementById(side === 'front' ? 'cardFrontCameraInput' : 'cardBackCameraInput').click();
-        }
-
-        function selectCard(side) {
-            document.getElementById(side === 'front' ? 'cardFrontGalleryInput' : 'cardBackGalleryInput').click();
-        }
-
-        function captureAvatar() {
-            document.getElementById('avatarCameraInput').click();
-        }
-
-        function selectAvatar() {
-            document.getElementById('avatarGalleryInput').click();
-        }
+        function captureCard(side) { document.getElementById(side === 'front' ? 'cardFrontCameraInput' : 'cardBackCameraInput').click(); }
+        function selectCard(side) { document.getElementById(side === 'front' ? 'cardFrontGalleryInput' : 'cardBackGalleryInput').click(); }
+        function captureAvatar() { document.getElementById('avatarCameraInput').click(); }
+        function selectAvatar() { document.getElementById('avatarGalleryInput').click(); }
 
         // ===== 通知 =====
         function showNotification(msg, type) {
@@ -1024,58 +1215,34 @@
             setTimeout(function() { el.className = 'notification'; }, 3000);
         }
 
-        // ===== 本地儲存（備份用）=====
+        // ===== 本地儲存 =====
         function loadFromLocal() {
             try {
-                var saved = localStorage.getItem('businessCards_v5');
+                var saved = localStorage.getItem('businessCards_v6');
                 if (saved) {
                     cards = JSON.parse(saved);
-                    console.log('本地資料:', cards.length, '筆');
                 }
             } catch (e) {
-                console.error('載入失敗:', e);
                 cards = [];
             }
         }
 
         function saveToLocal() {
             try {
-                // 儲存時不包含 base64 圖片（只存 URL）
-                var dataToSave = cards.map(function(c) {
-                    return {
-                        id: c.id,
-                        name: c.name,
-                        nameEn: c.nameEn,
-                        company: c.company,
-                        title: c.title,
-                        phone: c.phone,
-                        email: c.email,
-                        lineId: c.lineId,
-                        category: c.category,
-                        address: c.address,
-                        website: c.website,
-                        notes: c.notes,
-                        cardFrontUrl: c.cardFrontUrl || '',
-                        cardBackUrl: c.cardBackUrl || '',
-                        avatarUrl: c.avatarUrl || ''
-                    };
-                });
-                localStorage.setItem('businessCards_v5', JSON.stringify(dataToSave));
+                localStorage.setItem('businessCards_v6', JSON.stringify(cards));
             } catch (e) {
                 console.error('儲存失敗:', e);
             }
         }
 
-        // ===== 雲端 API 呼叫 =====
+        // ===== API 呼叫 =====
         async function apiCall(action, data) {
             var body = Object.assign({ action: action }, data);
-            
             var response = await fetch(API_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'text/plain' },
                 body: JSON.stringify(body)
             });
-            
             return await response.json();
         }
 
@@ -1093,12 +1260,9 @@
 
             try {
                 var result = await apiGet();
-                console.log('雲端資料:', result);
-
                 if (result.success && result.data) {
+                    var str = function(val) { return val === null || val === undefined ? '' : String(val); };
                     cards = result.data.map(function(row) {
-                        // 確保所有值都是字串
-                        var str = function(val) { return val === null || val === undefined ? '' : String(val); };
                         return {
                             id: str(row['ID']) || String(Date.now()),
                             name: str(row['姓名']),
@@ -1117,7 +1281,6 @@
                             avatarUrl: str(row['大頭照'])
                         };
                     });
-
                     saveToLocal();
                     renderCards();
                     showNotification('✅ 同步成功！' + cards.length + ' 筆', 'success');
@@ -1131,29 +1294,21 @@
                 showNotification('同步失敗: ' + err.message, 'error');
                 dot.className = 'sync-dot';
                 text.textContent = '離線';
+                renderCards();
             }
         }
 
-        // ===== 上傳圖片到 Google Drive =====
         async function uploadImageToDrive(base64Data, fileName) {
             if (!base64Data) return '';
-            
             try {
                 var base64Content = base64Data.split(',')[1];
                 var mimeType = base64Data.match(/data:(.*?);/)[1];
-                
                 var result = await apiCall('uploadImage', {
                     fileName: fileName,
                     base64Data: base64Content,
                     mimeType: mimeType
                 });
-                
-                if (result.success) {
-                    return result.url;
-                } else {
-                    console.error('上傳失敗:', result.error);
-                    return '';
-                }
+                return result.success ? result.url : '';
             } catch (err) {
                 console.error('上傳錯誤:', err);
                 return '';
@@ -1182,18 +1337,18 @@
 
             if (filtered.length === 0) {
                 grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;"><div class="empty-state-icon">📭</div><h3>' + 
-                    (cards.length === 0 ? '還沒有名片，點擊「新增」開始' : '找不到符合的名片') + '</h3></div>';
+                    (cards.length === 0 ? '還沒有名片' : '找不到符合的名片') + '</h3></div>';
                 return;
             }
 
             grid.innerHTML = filtered.map(function(card) {
-                var avatarStyle = card.avatarUrl ? 'background-image:url("' + card.avatarUrl + '");color:transparent;' : '';
+                var avatarStyle = card.avatarUrl ? 'background-image:url("' + card.avatarUrl + '");' : '';
                 var hasImages = card.cardFrontUrl || card.cardBackUrl;
                 
                 return '<div class="card" onclick="openDetailModal(\'' + card.id + '\')">' +
-                    '<span class="card-category cat-' + (card.category || '其他') + '">' + (card.category || '其他') + '</span>' +
+                    '<span class="card-category">' + escapeHtml(card.category || '其他') + '</span>' +
                     '<div class="card-header">' +
-                        '<div class="card-avatar avatar-' + (card.category || '其他') + '" style="' + avatarStyle + '">' + (card.avatarUrl ? '' : (card.name ? card.name.charAt(0) : '?')) + '</div>' +
+                        '<div class="card-avatar" style="' + avatarStyle + '">' + (card.avatarUrl ? '' : (card.name ? card.name.charAt(0) : '?')) + '</div>' +
                         '<div>' +
                             '<div class="card-name">' + escapeHtml(card.name) + '</div>' +
                             (card.nameEn ? '<div class="card-name-en">' + escapeHtml(card.nameEn) + '</div>' : '') +
@@ -1244,7 +1399,7 @@
             document.getElementById('cardPhone').value = '';
             document.getElementById('cardEmail').value = '';
             document.getElementById('cardLine').value = '';
-            document.getElementById('cardCategory').value = '客戶';
+            document.getElementById('cardCategory').value = categories[0] || '客戶';
             document.getElementById('cardAddress').value = '';
             document.getElementById('cardWebsite').value = '';
             document.getElementById('cardNotes').value = '';
@@ -1255,6 +1410,7 @@
             cardFrontUrl = '';
             cardBackUrl = '';
             avatarUrl = '';
+            ocrLines = [];
             
             document.getElementById('cardFrontBox').innerHTML = '<span class="image-box-icon">📄</span><span class="image-box-label">正面</span>';
             document.getElementById('cardFrontBox').classList.remove('has-image');
@@ -1281,18 +1437,17 @@
             showLoading('儲存中...');
 
             try {
-                // 上傳圖片到 Google Drive
                 var uploadedFrontUrl = cardFrontUrl;
                 var uploadedBackUrl = cardBackUrl;
                 var uploadedAvatarUrl = avatarUrl;
 
                 if (cardFrontImage && !cardFrontUrl) {
                     showLoading('上傳名片正面...');
-                    uploadedFrontUrl = await uploadImageToDrive(cardFrontImage, 'card_front_' + Date.now() + '.jpg');
+                    uploadedFrontUrl = await uploadImageToDrive(cardFrontImage, 'front_' + Date.now() + '.jpg');
                 }
                 if (cardBackImage && !cardBackUrl) {
                     showLoading('上傳名片背面...');
-                    uploadedBackUrl = await uploadImageToDrive(cardBackImage, 'card_back_' + Date.now() + '.jpg');
+                    uploadedBackUrl = await uploadImageToDrive(cardBackImage, 'back_' + Date.now() + '.jpg');
                 }
                 if (avatarImage && !avatarUrl) {
                     showLoading('上傳大頭照...');
@@ -1318,7 +1473,6 @@
                 };
 
                 showLoading('儲存到雲端...');
-                
                 var action = editingId ? 'update' : 'add';
                 var result = await apiCall(action, { card: cardData });
 
@@ -1330,7 +1484,6 @@
                     throw new Error(result.error || '儲存失敗');
                 }
             } catch (err) {
-                console.error('儲存錯誤:', err);
                 showNotification('儲存失敗: ' + err.message, 'error');
             }
 
@@ -1344,30 +1497,26 @@
             var card = cards.find(function(c) { return c.id === id; });
             if (!card) return;
 
-            var avatarStyle = card.avatarUrl ? 'background-image:url("' + card.avatarUrl + '");color:transparent;' : '';
+            var avatarStyle = card.avatarUrl ? 'background-image:url("' + card.avatarUrl + '");' : '';
             var hasImages = card.cardFrontUrl || card.cardBackUrl;
             
             var imagesHtml = '';
             if (hasImages) {
                 imagesHtml = '<div class="detail-images">';
-                if (card.cardFrontUrl) {
-                    imagesHtml += '<div class="detail-image"><img src="' + card.cardFrontUrl + '" alt="正面"><div class="detail-image-label">正面</div></div>';
-                }
-                if (card.cardBackUrl) {
-                    imagesHtml += '<div class="detail-image"><img src="' + card.cardBackUrl + '" alt="背面"><div class="detail-image-label">背面</div></div>';
-                }
+                if (card.cardFrontUrl) imagesHtml += '<div class="detail-image"><img src="' + card.cardFrontUrl + '" alt="正面"><div class="detail-image-label">正面</div></div>';
+                if (card.cardBackUrl) imagesHtml += '<div class="detail-image"><img src="' + card.cardBackUrl + '" alt="背面"><div class="detail-image-label">背面</div></div>';
                 imagesHtml += '</div>';
             }
 
             document.getElementById('detailContent').innerHTML = 
                 imagesHtml +
                 '<div class="detail-header">' +
-                    '<div class="detail-avatar avatar-' + (card.category || '其他') + '" style="' + avatarStyle + '">' + (card.avatarUrl ? '' : card.name.charAt(0)) + '</div>' +
+                    '<div class="detail-avatar" style="' + avatarStyle + '">' + (card.avatarUrl ? '' : card.name.charAt(0)) + '</div>' +
                     '<div class="detail-info">' +
                         '<h2>' + escapeHtml(card.name) + '</h2>' +
                         (card.nameEn ? '<div class="name-en">' + escapeHtml(card.nameEn) + '</div>' : '') +
                         '<p>' + (escapeHtml(card.title) || '—') + '</p>' +
-                        '<span class="detail-category cat-' + (card.category || '其他') + '">' + (card.category || '其他') + '</span>' +
+                        '<span class="detail-category">' + escapeHtml(card.category || '其他') + '</span>' +
                     '</div>' +
                 '</div>' +
                 '<div class="detail-section">' +
@@ -1407,12 +1556,11 @@
             document.getElementById('cardPhone').value = card.phone || '';
             document.getElementById('cardEmail').value = card.email || '';
             document.getElementById('cardLine').value = card.lineId || '';
-            document.getElementById('cardCategory').value = card.category || '客戶';
+            document.getElementById('cardCategory').value = card.category || categories[0];
             document.getElementById('cardAddress').value = card.address || '';
             document.getElementById('cardWebsite').value = card.website || '';
             document.getElementById('cardNotes').value = card.notes || '';
 
-            // 設定現有圖片 URL
             cardFrontUrl = card.cardFrontUrl || '';
             cardBackUrl = card.cardBackUrl || '';
             avatarUrl = card.avatarUrl || '';
@@ -1434,6 +1582,7 @@
                 document.getElementById('avatarPreview').textContent = '';
             }
 
+            document.getElementById('ocrResult').classList.remove('active');
             closeDetailModal();
             document.getElementById('addModal').classList.add('active');
             document.body.style.overflow = 'hidden';
@@ -1441,24 +1590,19 @@
 
         async function deleteCard(id) {
             if (!confirm('確定刪除這張名片？')) return;
-
             showLoading('刪除中...');
-
             try {
                 var result = await apiCall('delete', { id: id });
-
                 if (result.success) {
                     showNotification('🗑️ 已刪除', 'success');
                     closeDetailModal();
                     await syncFromCloud();
                 } else {
-                    throw new Error(result.error || '刪除失敗');
+                    throw new Error(result.error);
                 }
             } catch (err) {
-                console.error('刪除錯誤:', err);
                 showNotification('刪除失敗: ' + err.message, 'error');
             }
-
             hideLoading();
         }
 
@@ -1475,18 +1619,15 @@
                 var base64Content = cardFrontImage.split(',')[1];
                 var result = await apiCall('ocr', { base64Image: base64Content });
 
-                console.log('OCR 結果:', result);
-
                 if (result.success && result.text) {
-                    document.getElementById('ocrText').textContent = result.text;
+                    ocrLines = result.text.split('\n').map(function(l) { return l.trim(); }).filter(function(l) { return l; });
+                    renderOcrLines();
                     document.getElementById('ocrResult').classList.add('active');
-                    parseBusinessCard(result.text);
-                    showNotification('✅ 辨識完成', 'success');
+                    showNotification('✅ 辨識完成，請點擊按鈕填入欄位', 'success');
                 } else {
                     throw new Error(result.error || '無法辨識');
                 }
             } catch (err) {
-                console.error('OCR 錯誤:', err);
                 showNotification('辨識失敗: ' + err.message, 'error');
             }
 
@@ -1495,180 +1636,60 @@
             btn.innerHTML = '🔍 辨識';
         }
 
-        // ===== 解析名片 =====
-        function parseBusinessCard(text) {
-            var lines = text.split('\n').map(function(l) { return l.trim(); }).filter(function(l) { return l; });
-            var allText = text;
-            var usedLines = [];
+        function renderOcrLines() {
+            var container = document.getElementById('ocrLines');
+            container.innerHTML = ocrLines.map(function(line, index) {
+                return '<div class="ocr-line">' +
+                    '<span class="ocr-line-text">' + escapeHtml(line) + '</span>' +
+                    '<div class="ocr-line-btns">' +
+                        '<button class="ocr-field-btn" onclick="fillField(\'cardName\', ' + index + ', this)">姓名</button>' +
+                        '<button class="ocr-field-btn" onclick="fillField(\'cardNameEn\', ' + index + ', this)">英文</button>' +
+                        '<button class="ocr-field-btn" onclick="fillField(\'cardCompany\', ' + index + ', this)">公司</button>' +
+                        '<button class="ocr-field-btn" onclick="fillField(\'cardTitle\', ' + index + ', this)">職稱</button>' +
+                        '<button class="ocr-field-btn" onclick="fillField(\'cardPhone\', ' + index + ', this)">電話</button>' +
+                        '<button class="ocr-field-btn" onclick="fillField(\'cardEmail\', ' + index + ', this)">Email</button>' +
+                        '<button class="ocr-field-btn" onclick="fillField(\'cardLine\', ' + index + ', this)">LINE</button>' +
+                        '<button class="ocr-field-btn" onclick="fillField(\'cardAddress\', ' + index + ', this)">地址</button>' +
+                    '</div>' +
+                '</div>';
+            }).join('');
+        }
 
-            // Email
-            var emailMatch = allText.match(/[\w.-]+@[\w.-]+\.\w+/);
-            if (emailMatch) {
-                document.getElementById('cardEmail').value = emailMatch[0];
-            }
-
-            // 電話
-            var phonePatterns = [
-                /09\d{2}[-\s]?\d{3}[-\s]?\d{3}/g,
-                /0\d{1,2}[-\s]?\d{3,4}[-\s]?\d{3,4}/g,
-                /\(\d{2,3}\)[-\s]?\d{3,4}[-\s]?\d{3,4}/g,
-                /\+886[-\s]?\d+[-\s]?\d+[-\s]?\d+/g
-            ];
+        function fillField(fieldId, lineIndex, btnEl) {
+            var value = ocrLines[lineIndex];
+            document.getElementById(fieldId).value = value;
             
-            for (var p = 0; p < phonePatterns.length; p++) {
-                var match = allText.match(phonePatterns[p]);
-                if (match) {
-                    document.getElementById('cardPhone').value = match[0];
-                    break;
-                }
-            }
-
-            // LINE ID
-            var lineMatch = allText.match(/(?:LINE|Line|line)[\s:：ID]*([\w._-]+)/i);
-            if (lineMatch && lineMatch[1] && lineMatch[1].length > 2) {
-                document.getElementById('cardLine').value = lineMatch[1];
-            }
-
-            // 網站
-            var webMatch = allText.match(/(?:www\.[\w.-]+\.\w+)|(?:https?:\/\/[\w.-]+)/i);
-            if (webMatch) {
-                document.getElementById('cardWebsite').value = webMatch[0];
-            }
-
-            // 公司
-            var companyKeywords = [
-                '股份有限公司', '有限公司', '公司', '企業', '集團', 
-                '事務所', '工作室', '診所', '醫院', '銀行', '證券',
-                '學院', '大學', '學校', '協會', '基金會', '商行',
-                '工廠', '實業', '科技', '顧問', '設計', '國際',
-                'Co.', 'Corp', 'Inc', 'Ltd', 'LLC', 'Company', 'Group'
-            ];
+            // 標記已使用
+            btnEl.classList.add('used');
             
-            for (var i = 0; i < lines.length; i++) {
-                var line = lines[i];
-                for (var j = 0; j < companyKeywords.length; j++) {
-                    if (line.includes(companyKeywords[j])) {
-                        document.getElementById('cardCompany').value = line;
-                        usedLines.push(line);
-                        break;
-                    }
-                }
-                if (document.getElementById('cardCompany').value) break;
-            }
+            // 閃爍效果
+            var input = document.getElementById(fieldId);
+            input.style.backgroundColor = 'rgba(6, 214, 160, 0.3)';
+            setTimeout(function() {
+                input.style.backgroundColor = '';
+            }, 500);
 
-            // 職稱
-            var titleKeywords = [
-                '董事長', '總經理', '副總', '協理', '經理', '副理', '襄理',
-                '總監', '主管', '專員', '組長', '課長', '店長', '廠長',
-                '工程師', '設計師', '建築師', '會計師', '律師', '醫師', '藥師',
-                '顧問', '業務', '秘書', '助理', '總裁', '執行長',
-                'CEO', 'CTO', 'CFO', 'COO', 'VP', 'Director', 'Manager', 
-                'Engineer', 'Designer', 'Consultant', 'President'
-            ];
-            
-            for (var i = 0; i < lines.length; i++) {
-                var line = lines[i];
-                if (usedLines.includes(line)) continue;
-                
-                for (var j = 0; j < titleKeywords.length; j++) {
-                    if (line.includes(titleKeywords[j])) {
-                        document.getElementById('cardTitle').value = line;
-                        usedLines.push(line);
-                        break;
-                    }
-                }
-                if (document.getElementById('cardTitle').value) break;
-            }
-
-            // 姓名（常見姓氏）
-            var commonSurnames = ['陳', '林', '黃', '張', '李', '王', '吳', '劉', '蔡', '楊', 
-                '許', '鄭', '謝', '郭', '洪', '曾', '邱', '廖', '賴', '周', '徐', '蘇', '葉',
-                '莊', '呂', '江', '何', '蕭', '羅', '高', '潘', '簡', '朱', '鍾', '游', '詹',
-                '彭', '施', '沈', '余', '盧', '梁', '趙', '顏', '柯', '翁', '魏', '孫', '戴',
-                '范', '方', '宋', '鄧', '杜', '傅', '侯', '曹', '薛', '丁', '卓', '馬', '阮',
-                '董', '温', '唐', '藍', '石', '蔣', '古', '紀', '姚', '連', '馮', '歐', '程',
-                '湯', '黎', '田', '康', '鄒', '白', '涂', '尤', '巫', '韓', '龔', '嚴', '袁'];
-            
-            var foundName = false;
-            
-            for (var i = 0; i < lines.length; i++) {
-                var line = lines[i];
-                if (usedLines.includes(line)) continue;
-                if (line.includes('@') || line.includes('www') || line.match(/\d{4,}/)) continue;
-                
-                if (/^[\u4e00-\u9fa5]{2,4}$/.test(line)) {
-                    var firstChar = line.charAt(0);
-                    if (commonSurnames.includes(firstChar)) {
-                        document.getElementById('cardName').value = line;
-                        usedLines.push(line);
-                        foundName = true;
-                        break;
-                    }
-                }
-            }
-            
-            if (!foundName) {
-                for (var i = 0; i < lines.length; i++) {
-                    var line = lines[i];
-                    if (usedLines.includes(line)) continue;
-                    if (line.includes('@') || line.includes('www') || line.match(/\d{4,}/)) continue;
-                    
-                    if (/^[\u4e00-\u9fa5]{2,4}$/.test(line)) {
-                        document.getElementById('cardName').value = line;
-                        usedLines.push(line);
-                        break;
-                    }
-                }
-            }
-
-            // 英文名
-            var englishNamePattern = /^[A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2}$/;
-            for (var i = 0; i < lines.length; i++) {
-                var line = lines[i];
-                if (usedLines.includes(line)) continue;
-                if (line.includes('@') || line.includes('www') || line.includes('.com')) continue;
-                
-                if (englishNamePattern.test(line) && line.length > 3 && line.length < 30) {
-                    document.getElementById('cardNameEn').value = line;
-                    break;
-                }
-            }
-
-            // 地址
-            var addressKeywords = ['市', '縣', '區', '鄉', '鎮', '路', '街', '巷', '弄', '號', '樓'];
-            for (var i = 0; i < lines.length; i++) {
-                var line = lines[i];
-                var matchCount = 0;
-                for (var j = 0; j < addressKeywords.length; j++) {
-                    if (line.includes(addressKeywords[j])) matchCount++;
-                }
-                if (matchCount >= 3) {
-                    document.getElementById('cardAddress').value = line;
-                    break;
-                }
-            }
+            showNotification('已填入: ' + value.substring(0, 20) + (value.length > 20 ? '...' : ''));
         }
 
         // ===== 工具 =====
         function escapeHtml(str) {
             if (!str) return '';
-            return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
         }
 
-        // ===== 鍵盤事件 =====
+        // ===== 事件 =====
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
                 closeAddModal();
                 closeDetailModal();
+                closeCategoryModal();
             }
         });
 
-        document.getElementById('addModal').addEventListener('click', function(e) {
-            if (e.target === this) closeAddModal();
-        });
-        document.getElementById('detailModal').addEventListener('click', function(e) {
-            if (e.target === this) closeDetailModal();
-        });
+        document.getElementById('addModal').addEventListener('click', function(e) { if (e.target === this) closeAddModal(); });
+        document.getElementById('detailModal').addEventListener('click', function(e) { if (e.target === this) closeDetailModal(); });
+        document.getElementById('categoryModal').addEventListener('click', function(e) { if (e.target === this) closeCategoryModal(); });
     </script>
 </body>
 </html>
