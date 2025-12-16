@@ -830,8 +830,7 @@
                     <span class="sync-dot" id="syncDot"></span>
                     <span id="syncText">離線</span>
                 </div>
-                <button class="btn btn-secondary btn-icon" onclick="reloadApp()" title="重新整理">🔄</button>
-                <button class="btn btn-secondary btn-icon" onclick="syncFromCloud()" title="雲端同步">☁️</button>
+                <button class="btn btn-secondary btn-icon" onclick="syncFromCloud()" title="同步資料">🔄</button>
                 <button class="btn btn-primary" onclick="openAddModal()">➕ 新增</button>
             </div>
         </div>
@@ -1315,6 +1314,22 @@
             }
         }
 
+        // 轉換 Google Drive URL 為可顯示的格式
+        function getDriveImageUrl(url) {
+            if (!url) return '';
+            // 如果是 drive.google.com/uc?id=xxx 格式
+            var match = url.match(/[?&]id=([^&]+)/);
+            if (match) {
+                return 'https://lh3.googleusercontent.com/d/' + match[1];
+            }
+            // 如果是 drive.google.com/file/d/xxx 格式
+            match = url.match(/\/d\/([^\/]+)/);
+            if (match) {
+                return 'https://lh3.googleusercontent.com/d/' + match[1];
+            }
+            return url;
+        }
+
         // ===== 渲染名片 =====
         function renderCards() {
             var grid = document.getElementById('cardsGrid');
@@ -1342,13 +1357,16 @@
             }
 
             grid.innerHTML = filtered.map(function(card) {
-                var avatarStyle = card.avatarUrl ? 'background-image:url("' + card.avatarUrl + '");' : '';
-                var hasImages = card.cardFrontUrl || card.cardBackUrl;
+                var avatarImg = getDriveImageUrl(card.avatarUrl);
+                var frontImg = getDriveImageUrl(card.cardFrontUrl);
+                var backImg = getDriveImageUrl(card.cardBackUrl);
+                var avatarStyle = avatarImg ? 'background-image:url("' + avatarImg + '");' : '';
+                var hasImages = frontImg || backImg;
                 
                 return '<div class="card" onclick="openDetailModal(\'' + card.id + '\')">' +
                     '<span class="card-category">' + escapeHtml(card.category || '其他') + '</span>' +
                     '<div class="card-header">' +
-                        '<div class="card-avatar" style="' + avatarStyle + '">' + (card.avatarUrl ? '' : (card.name ? card.name.charAt(0) : '?')) + '</div>' +
+                        '<div class="card-avatar" style="' + avatarStyle + '">' + (avatarImg ? '' : (card.name ? card.name.charAt(0) : '?')) + '</div>' +
                         '<div>' +
                             '<div class="card-name">' + escapeHtml(card.name) + '</div>' +
                             (card.nameEn ? '<div class="card-name-en">' + escapeHtml(card.nameEn) + '</div>' : '') +
@@ -1361,8 +1379,8 @@
                         (card.lineId ? '<div class="card-contact card-line">💬 ' + escapeHtml(card.lineId) + '</div>' : '') +
                     '</div>' +
                     (hasImages ? '<div class="card-images">' +
-                        (card.cardFrontUrl ? '<div class="card-image-thumb" style="background-image:url(\'' + card.cardFrontUrl + '\')"></div>' : '') +
-                        (card.cardBackUrl ? '<div class="card-image-thumb" style="background-image:url(\'' + card.cardBackUrl + '\')"></div>' : '') +
+                        (frontImg ? '<div class="card-image-thumb" style="background-image:url(\'' + frontImg + '\')"></div>' : '') +
+                        (backImg ? '<div class="card-image-thumb" style="background-image:url(\'' + backImg + '\')"></div>' : '') +
                     '</div>' : '') +
                 '</div>';
             }).join('');
@@ -1497,21 +1515,24 @@
             var card = cards.find(function(c) { return c.id === id; });
             if (!card) return;
 
-            var avatarStyle = card.avatarUrl ? 'background-image:url("' + card.avatarUrl + '");' : '';
-            var hasImages = card.cardFrontUrl || card.cardBackUrl;
+            var avatarImg = getDriveImageUrl(card.avatarUrl);
+            var frontImg = getDriveImageUrl(card.cardFrontUrl);
+            var backImg = getDriveImageUrl(card.cardBackUrl);
+            var avatarStyle = avatarImg ? 'background-image:url("' + avatarImg + '");' : '';
+            var hasImages = frontImg || backImg;
             
             var imagesHtml = '';
             if (hasImages) {
                 imagesHtml = '<div class="detail-images">';
-                if (card.cardFrontUrl) imagesHtml += '<div class="detail-image"><img src="' + card.cardFrontUrl + '" alt="正面"><div class="detail-image-label">正面</div></div>';
-                if (card.cardBackUrl) imagesHtml += '<div class="detail-image"><img src="' + card.cardBackUrl + '" alt="背面"><div class="detail-image-label">背面</div></div>';
+                if (frontImg) imagesHtml += '<div class="detail-image"><img src="' + frontImg + '" alt="正面"><div class="detail-image-label">正面</div></div>';
+                if (backImg) imagesHtml += '<div class="detail-image"><img src="' + backImg + '" alt="背面"><div class="detail-image-label">背面</div></div>';
                 imagesHtml += '</div>';
             }
 
             document.getElementById('detailContent').innerHTML = 
                 imagesHtml +
                 '<div class="detail-header">' +
-                    '<div class="detail-avatar" style="' + avatarStyle + '">' + (card.avatarUrl ? '' : card.name.charAt(0)) + '</div>' +
+                    '<div class="detail-avatar" style="' + avatarStyle + '">' + (avatarImg ? '' : card.name.charAt(0)) + '</div>' +
                     '<div class="detail-info">' +
                         '<h2>' + escapeHtml(card.name) + '</h2>' +
                         (card.nameEn ? '<div class="name-en">' + escapeHtml(card.nameEn) + '</div>' : '') +
@@ -1569,15 +1590,15 @@
             avatarImage = null;
 
             if (cardFrontUrl) {
-                document.getElementById('cardFrontBox').innerHTML = '<img src="' + cardFrontUrl + '" alt="正面">';
+                document.getElementById('cardFrontBox').innerHTML = '<img src="' + getDriveImageUrl(cardFrontUrl) + '" alt="正面">';
                 document.getElementById('cardFrontBox').classList.add('has-image');
             }
             if (cardBackUrl) {
-                document.getElementById('cardBackBox').innerHTML = '<img src="' + cardBackUrl + '" alt="背面">';
+                document.getElementById('cardBackBox').innerHTML = '<img src="' + getDriveImageUrl(cardBackUrl) + '" alt="背面">';
                 document.getElementById('cardBackBox').classList.add('has-image');
             }
             if (avatarUrl) {
-                document.getElementById('avatarPreview').style.backgroundImage = 'url("' + avatarUrl + '")';
+                document.getElementById('avatarPreview').style.backgroundImage = 'url("' + getDriveImageUrl(avatarUrl) + '")';
                 document.getElementById('avatarPreview').classList.add('has-image');
                 document.getElementById('avatarPreview').textContent = '';
             }
