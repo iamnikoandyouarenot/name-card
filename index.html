@@ -8,6 +8,8 @@
     <meta name="theme-color" content="#0f172a">
     <title>名片管理中心</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
     <style>
         :root {
             --primary: #06d6a0;
@@ -791,6 +793,131 @@
             flex: 1;
         }
 
+        /* 圖片編輯器 Modal */
+        .image-editor-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.95);
+            display: none;
+            flex-direction: column;
+            z-index: 500;
+            padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0;
+        }
+
+        .image-editor-overlay.active {
+            display: flex;
+        }
+
+        .image-editor-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: rgba(30, 41, 59, 0.9);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .image-editor-header h3 {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .image-editor-close {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: var(--text-secondary);
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        .image-editor-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background: #000;
+        }
+
+        .image-editor-container img {
+            max-width: 100%;
+            max-height: 100%;
+            display: block;
+        }
+
+        .image-editor-tools {
+            display: flex;
+            gap: 10px;
+            padding: 12px 16px;
+            background: rgba(30, 41, 59, 0.9);
+            border-top: 1px solid var(--border);
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .editor-btn {
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            font-family: inherit;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .editor-btn.rotate {
+            background: rgba(255,255,255,0.1);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .editor-btn.rotate:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .editor-btn.cancel {
+            background: rgba(239, 68, 68, 0.1);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .editor-btn.confirm {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+        }
+
+        /* Cropper.js 覆蓋樣式 */
+        .cropper-view-box,
+        .cropper-face {
+            border-radius: 0;
+        }
+
+        .cropper-view-box {
+            outline: 2px solid var(--primary);
+            outline-offset: -2px;
+        }
+
+        .cropper-line {
+            background-color: var(--primary);
+        }
+
+        .cropper-point {
+            background-color: var(--primary);
+            width: 10px;
+            height: 10px;
+        }
+
+        .cropper-modal {
+            background-color: rgba(0, 0, 0, 0.7);
+        }
+
         @media (max-width: 480px) {
             .header-top { flex-wrap: wrap; }
             .form-row { grid-template-columns: 1fr; }
@@ -807,6 +934,23 @@
     <div id="loadingOverlay" class="loading-overlay">
         <span class="loading"></span>
         <p id="loadingText">載入中...</p>
+    </div>
+
+    <!-- 圖片編輯器 -->
+    <div class="image-editor-overlay" id="imageEditorOverlay">
+        <div class="image-editor-header">
+            <h3>📐 編輯圖片</h3>
+            <button class="image-editor-close" onclick="cancelImageEdit()">✕</button>
+        </div>
+        <div class="image-editor-container">
+            <img id="editorImage" src="" alt="編輯中">
+        </div>
+        <div class="image-editor-tools">
+            <button class="editor-btn rotate" onclick="rotateImage(-90)">↺ 左轉</button>
+            <button class="editor-btn rotate" onclick="rotateImage(90)">↻ 右轉</button>
+            <button class="editor-btn cancel" onclick="cancelImageEdit()">取消</button>
+            <button class="editor-btn confirm" onclick="confirmImageEdit()">✓ 確定</button>
+        </div>
     </div>
 
     <input type="file" id="cardFrontCameraInput" class="hidden-input" accept="image/*" capture="environment">
@@ -1166,13 +1310,104 @@
             reader.readAsDataURL(file);
         }
 
+        // ===== 圖片編輯器 =====
+        var cropper = null;
+        var currentEditSide = null;
+        var currentEditType = null; // 'card' or 'avatar'
+
         function handleCardImage(e, side) {
             var file = e.target.files[0];
             if (!file) return;
+            e.target.value = ''; // 清除 input 讓同張圖可以重選
 
-            compressImage(file, 1200, 0.8, function(dataUrl) {
-                var box = document.getElementById(side === 'front' ? 'cardFrontBox' : 'cardBackBox');
-                if (side === 'front') {
+            var reader = new FileReader();
+            reader.onload = function(evt) {
+                openImageEditor(evt.target.result, 'card', side);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function handleAvatarImage(e) {
+            var file = e.target.files[0];
+            if (!file) return;
+            e.target.value = '';
+
+            var reader = new FileReader();
+            reader.onload = function(evt) {
+                openImageEditor(evt.target.result, 'avatar', null);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function openImageEditor(imageSrc, type, side) {
+            currentEditType = type;
+            currentEditSide = side;
+
+            var editorImg = document.getElementById('editorImage');
+            editorImg.src = imageSrc;
+
+            document.getElementById('imageEditorOverlay').classList.add('active');
+            document.body.style.overflow = 'hidden';
+
+            // 等圖片載入後初始化 Cropper
+            editorImg.onload = function() {
+                if (cropper) {
+                    cropper.destroy();
+                }
+                
+                var aspectRatio = type === 'avatar' ? 1 : (9 / 5); // 名片比例約 9:5
+                
+                cropper = new Cropper(editorImg, {
+                    viewMode: 1,
+                    dragMode: 'move',
+                    aspectRatio: type === 'avatar' ? 1 : NaN, // 大頭照固定 1:1，名片自由
+                    autoCropArea: 0.9,
+                    restore: false,
+                    guides: true,
+                    center: true,
+                    highlight: false,
+                    cropBoxMovable: true,
+                    cropBoxResizable: true,
+                    toggleDragModeOnDblclick: false,
+                    minContainerWidth: 200,
+                    minContainerHeight: 200,
+                });
+            };
+        }
+
+        function rotateImage(degree) {
+            if (cropper) {
+                cropper.rotate(degree);
+            }
+        }
+
+        function cancelImageEdit() {
+            if (cropper) {
+                cropper.destroy();
+                cropper = null;
+            }
+            document.getElementById('imageEditorOverlay').classList.remove('active');
+            document.body.style.overflow = '';
+            currentEditSide = null;
+            currentEditType = null;
+        }
+
+        function confirmImageEdit() {
+            if (!cropper) return;
+
+            // 取得裁切後的圖片
+            var canvas = cropper.getCroppedCanvas({
+                maxWidth: currentEditType === 'avatar' ? 400 : 1200,
+                maxHeight: currentEditType === 'avatar' ? 400 : 1200,
+                imageSmoothingEnabled: true,
+                imageSmoothingQuality: 'high',
+            });
+
+            var dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+
+            if (currentEditType === 'card') {
+                var box = document.getElementById(currentEditSide === 'front' ? 'cardFrontBox' : 'cardBackBox');
+                if (currentEditSide === 'front') {
                     cardFrontImage = dataUrl;
                     cardFrontUrl = '';
                     document.getElementById('recognizeBtn').disabled = false;
@@ -1182,21 +1417,18 @@
                 }
                 box.innerHTML = '<img src="' + dataUrl + '" alt="名片">';
                 box.classList.add('has-image');
-            });
-        }
-
-        function handleAvatarImage(e) {
-            var file = e.target.files[0];
-            if (!file) return;
-
-            compressImage(file, 400, 0.8, function(dataUrl) {
+            } else if (currentEditType === 'avatar') {
                 avatarImage = dataUrl;
                 avatarUrl = '';
                 var preview = document.getElementById('avatarPreview');
                 preview.style.backgroundImage = 'url("' + dataUrl + '")';
                 preview.classList.add('has-image');
                 preview.textContent = '';
-            });
+            }
+
+            // 關閉編輯器
+            cancelImageEdit();
+            showNotification('✅ 圖片已編輯完成', 'success');
         }
 
         function captureCard(side) { document.getElementById(side === 'front' ? 'cardFrontCameraInput' : 'cardBackCameraInput').click(); }
