@@ -10,6 +10,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
+    <script>
+        // OpenCV runtime 就緒旗標（自動裁切用）
+        window.cvReady = false;
+        window.Module = { onRuntimeInitialized: function() { window.cvReady = true; console.log('✅ OpenCV 就緒'); } };
+    </script>
+    <script async src="https://docs.opencv.org/4.10.0/opencv.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/puffinsoft/jscanify@master/src/jscanify.min.js"></script>
     <style>
         :root {
             --primary: #06d6a0;
@@ -621,6 +628,33 @@
             margin-top: 10px;
         }
 
+        .ai-summary {
+            font-size: 12px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .ai-summary-row {
+            display: flex;
+            gap: 8px;
+            padding: 4px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .ai-summary-label {
+            color: var(--primary);
+            min-width: 60px;
+            font-weight: 600;
+        }
+
+        .ai-summary-value {
+            flex: 1;
+            color: var(--text-primary);
+            word-break: break-all;
+        }
+
         .ocr-apply-bar button {
             flex: 1;
             padding: 10px;
@@ -1112,20 +1146,19 @@
                 <div class="image-btns">
                     <button type="button" class="image-btn camera" onclick="captureCard('front')">📷 拍正面</button>
                     <button type="button" class="image-btn gallery" onclick="selectCard('front')">🖼️ 選正面</button>
-                    <button type="button" class="image-btn recognize" id="recognizeBtn" onclick="recognizeCard()" disabled>🔍 辨識</button>
+                    <button type="button" class="image-btn recognize" id="recognizeBtn" onclick="recognizeCard()" disabled>🤖 AI 辨識</button>
                 </div>
                 <div class="image-btns" style="margin-top:6px;">
                     <button type="button" class="image-btn camera" onclick="captureCard('back')">📷 拍背面</button>
                     <button type="button" class="image-btn gallery" onclick="selectCard('back')">🖼️ 選背面</button>
                 </div>
                 
-                <!-- OCR 結果 - 自動分類，可調整 -->
+                <!-- AI 辨識結果摘要 -->
                 <div class="ocr-result" id="ocrResult">
-                    <h4>📝 已自動分類，請確認或用下拉選單調整</h4>
-                    <div class="ocr-lines" id="ocrLines"></div>
+                    <h4 id="ocrResultTitle">🤖 AI 已辨識並填入表單</h4>
+                    <div class="ai-summary" id="aiSummary"></div>
                     <div class="ocr-apply-bar">
                         <button type="button" class="ocr-rescan-btn" onclick="recognizeCard()">🔄 重新辨識</button>
-                        <button type="button" class="ocr-apply-btn" onclick="applyOcrFields()">✓ 套用到表單</button>
                     </div>
                 </div>
             </div>
@@ -1171,17 +1204,33 @@
             </div>
             <div class="form-row">
                 <div class="form-group">
-                    <label class="form-label">📱 電話</label>
-                    <input type="tel" class="form-input" id="cardPhone" placeholder="0912-345-678">
+                    <label class="form-label">📱 行動電話</label>
+                    <input type="tel" class="form-input" id="cardMobile" placeholder="0912-345-678">
                 </div>
+                <div class="form-group">
+                    <label class="form-label">☎️ 市話</label>
+                    <input type="tel" class="form-input" id="cardPhone" placeholder="(02)1234-5678">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">📠 傳真</label>
+                    <input type="tel" class="form-input" id="cardFax" placeholder="(02)1234-5678">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">🔢 統編</label>
+                    <input type="text" class="form-input" id="cardTaxId" placeholder="12345678">
+                </div>
+            </div>
+            <div class="form-row">
                 <div class="form-group">
                     <label class="form-label">💬 LINE ID</label>
                     <input type="text" class="form-input highlight" id="cardLine" placeholder="line_id">
                 </div>
-            </div>
-            <div class="form-group">
-                <label class="form-label">✉️ Email</label>
-                <input type="email" class="form-input" id="cardEmail" placeholder="email@example.com">
+                <div class="form-group">
+                    <label class="form-label">✉️ Email</label>
+                    <input type="email" class="form-input" id="cardEmail" placeholder="email@example.com">
+                </div>
             </div>
             <div class="form-group">
                 <label class="form-label">📍 地址</label>
@@ -1243,8 +1292,6 @@
         let cardBackUrl = '';
         let avatarUrl = '';
         let editingId = null;
-        let ocrLines = [];
-        let ocrClassified = [];
 
         // ===== 初始化 =====
         document.addEventListener('DOMContentLoaded', function() {
@@ -1412,9 +1459,71 @@
 
             var reader = new FileReader();
             reader.onload = function(evt) {
-                openImageEditor(evt.target.result, 'card', side);
+                var src = evt.target.result;
+                showLoading('🔍 偵測名片邊緣...');
+                autoCropCard(src, function(cropped, didCrop) {
+                    hideLoading();
+                    openImageEditor(cropped, 'card', side);
+                    if (didCrop) {
+                        showNotification('✅ 已自動偵測並校正名片', 'success');
+                    }
+                });
             };
             reader.readAsDataURL(file);
+        }
+
+        // 自動偵測名片邊緣並透視校正（jscanify + OpenCV）
+        function autoCropCard(imageSrc, callback) {
+            // OpenCV 尚未就緒或函式庫缺失 → 直接用原圖
+            if (!window.cvReady || typeof cv === 'undefined' || typeof jscanify === 'undefined') {
+                console.log('OpenCV 未就緒，略過自動裁切');
+                callback(imageSrc, false);
+                return;
+            }
+
+            var img = new Image();
+            img.onload = function() {
+                var mat = null;
+                try {
+                    var scanner = new jscanify();
+                    mat = cv.imread(img);
+                    var contour = scanner.findPaperContour(mat);
+                    if (!contour) { mat.delete(); callback(imageSrc, false); return; }
+
+                    var corners = scanner.getCornerPoints(contour);
+                    if (!corners || !corners.topLeftCorner || !corners.bottomRightCorner) {
+                        mat.delete(); callback(imageSrc, false); return;
+                    }
+
+                    var tl = corners.topLeftCorner, tr = corners.topRightCorner;
+                    var bl = corners.bottomLeftCorner, br = corners.bottomRightCorner;
+
+                    var wTop = Math.hypot((tr.x - tl.x), (tr.y - tl.y));
+                    var wBot = Math.hypot((br.x - bl.x), (br.y - bl.y));
+                    var hLeft = Math.hypot((bl.x - tl.x), (bl.y - tl.y));
+                    var hRight = Math.hypot((br.x - tr.x), (br.y - tr.y));
+                    var w = Math.max(wTop, wBot), h = Math.max(hLeft, hRight);
+
+                    // 偵測到的區域太小（可能誤判）→ 用原圖
+                    var areaRatio = (w * h) / (img.width * img.height);
+                    if (w < 120 || h < 70 || areaRatio < 0.12) {
+                        mat.delete(); callback(imageSrc, false); return;
+                    }
+
+                    var scale = Math.min(1, 1500 / Math.max(w, h));
+                    w = Math.round(w * scale); h = Math.round(h * scale);
+
+                    var resultCanvas = scanner.extractPaper(img, w, h, corners);
+                    mat.delete();
+                    callback(resultCanvas.toDataURL('image/jpeg', 0.9), true);
+                } catch (err) {
+                    console.warn('自動裁切失敗，改用原圖:', err);
+                    if (mat) { try { mat.delete(); } catch (e2) {} }
+                    callback(imageSrc, false);
+                }
+            };
+            img.onerror = function() { callback(imageSrc, false); };
+            img.src = imageSrc;
         }
 
         function handleAvatarImage(e) {
@@ -1620,7 +1729,10 @@
                             nameEn: str(row['英文名']),
                             company: str(row['公司']),
                             title: str(row['職稱']),
+                            mobile: str(row['行動電話']),
                             phone: str(row['電話']),
+                            fax: str(row['傳真']),
+                            taxId: str(row['統編']),
                             email: str(row['Email']),
                             lineId: str(row['LINE_ID']),
                             category: str(row['分類']) || '其他',
@@ -1766,7 +1878,10 @@
             document.getElementById('cardNameEn').value = '';
             document.getElementById('cardCompany').value = '';
             document.getElementById('cardTitle').value = '';
+            document.getElementById('cardMobile').value = '';
             document.getElementById('cardPhone').value = '';
+            document.getElementById('cardFax').value = '';
+            document.getElementById('cardTaxId').value = '';
             document.getElementById('cardEmail').value = '';
             document.getElementById('cardLine').value = '';
             document.getElementById('cardCategory').value = categories[0] || '客戶';
@@ -1780,7 +1895,6 @@
             cardFrontUrl = '';
             cardBackUrl = '';
             avatarUrl = '';
-            ocrLines = [];
             
             document.getElementById('cardFrontBox').innerHTML = '<span class="image-box-icon">📄</span><span class="image-box-label">正面</span>';
             document.getElementById('cardFrontBox').classList.remove('has-image');
@@ -1830,7 +1944,10 @@
                     '英文名': document.getElementById('cardNameEn').value.trim(),
                     '公司': document.getElementById('cardCompany').value.trim(),
                     '職稱': document.getElementById('cardTitle').value.trim(),
+                    '行動電話': document.getElementById('cardMobile').value.trim(),
                     '電話': document.getElementById('cardPhone').value.trim(),
+                    '傳真': document.getElementById('cardFax').value.trim(),
+                    '統編': document.getElementById('cardTaxId').value.trim(),
                     'Email': document.getElementById('cardEmail').value.trim(),
                     'LINE_ID': document.getElementById('cardLine').value.trim(),
                     '分類': document.getElementById('cardCategory').value,
@@ -1894,11 +2011,14 @@
                 '</div>' +
                 '<div class="detail-section">' +
                     (card.company ? '<div class="detail-row"><span class="detail-row-icon">🏢</span><span class="detail-row-label">公司</span><span class="detail-row-value">' + escapeHtml(card.company) + '</span></div>' : '') +
-                    (card.phone ? '<div class="detail-row"><span class="detail-row-icon">📱</span><span class="detail-row-label">電話</span><span class="detail-row-value"><a href="tel:' + card.phone + '">' + escapeHtml(card.phone) + '</a></span></div>' : '') +
+                    (card.mobile ? '<div class="detail-row"><span class="detail-row-icon">📱</span><span class="detail-row-label">行動</span><span class="detail-row-value"><a href="tel:' + card.mobile + '">' + escapeHtml(card.mobile) + '</a></span></div>' : '') +
+                    (card.phone ? '<div class="detail-row"><span class="detail-row-icon">☎️</span><span class="detail-row-label">市話</span><span class="detail-row-value"><a href="tel:' + card.phone + '">' + escapeHtml(card.phone) + '</a></span></div>' : '') +
+                    (card.fax ? '<div class="detail-row"><span class="detail-row-icon">📠</span><span class="detail-row-label">傳真</span><span class="detail-row-value">' + escapeHtml(card.fax) + '</span></div>' : '') +
                     (card.lineId ? '<div class="detail-row"><span class="detail-row-icon">💬</span><span class="detail-row-label">LINE</span><span class="detail-row-value line"><a href="https://line.me/ti/p/~' + card.lineId + '" target="_blank">' + escapeHtml(card.lineId) + '</a></span></div>' : '') +
                     (card.email ? '<div class="detail-row"><span class="detail-row-icon">✉️</span><span class="detail-row-label">Email</span><span class="detail-row-value"><a href="mailto:' + card.email + '">' + escapeHtml(card.email) + '</a></span></div>' : '') +
                     (card.address ? '<div class="detail-row"><span class="detail-row-icon">📍</span><span class="detail-row-label">地址</span><span class="detail-row-value">' + escapeHtml(card.address) + '</span></div>' : '') +
                     (card.website ? '<div class="detail-row"><span class="detail-row-icon">🌐</span><span class="detail-row-label">網站</span><span class="detail-row-value"><a href="' + (card.website.startsWith('http') ? card.website : 'https://' + card.website) + '" target="_blank">' + escapeHtml(card.website) + '</a></span></div>' : '') +
+                    (card.taxId ? '<div class="detail-row"><span class="detail-row-icon">🔢</span><span class="detail-row-label">統編</span><span class="detail-row-value">' + escapeHtml(card.taxId) + '</span></div>' : '') +
                 '</div>' +
                 (card.notes ? '<div class="detail-notes"><h4>📝 備註</h4><p>' + escapeHtml(card.notes) + '</p></div>' : '') +
                 '<div class="form-actions">' +
@@ -1926,7 +2046,10 @@
             document.getElementById('cardNameEn').value = card.nameEn || '';
             document.getElementById('cardCompany').value = card.company || '';
             document.getElementById('cardTitle').value = card.title || '';
+            document.getElementById('cardMobile').value = card.mobile || '';
             document.getElementById('cardPhone').value = card.phone || '';
+            document.getElementById('cardFax').value = card.fax || '';
+            document.getElementById('cardTaxId').value = card.taxId || '';
             document.getElementById('cardEmail').value = card.email || '';
             document.getElementById('cardLine').value = card.lineId || '';
             document.getElementById('cardCategory').value = card.category || categories[0];
@@ -1979,194 +2102,77 @@
             hideLoading();
         }
 
-        // ===== OCR 辨識 =====
+        // ===== AI 名片辨識（Gemini）=====
         async function recognizeCard() {
             if (!cardFrontImage) return;
 
             var btn = document.getElementById('recognizeBtn');
             btn.disabled = true;
-            btn.innerHTML = '<span class="loading"></span>';
-            showLoading('辨識中...');
+            btn.innerHTML = '<span class="loading"></span> AI 辨識中';
+            showLoading('🤖 AI 辨識中，請稍候...');
 
             try {
                 var base64Content = cardFrontImage.split(',')[1];
-                var result = await apiCall('ocr', { base64Image: base64Content });
+                var mimeType = (cardFrontImage.match(/data:(.*?);/) || [])[1] || 'image/jpeg';
+                var result = await apiCall('aiRecognize', { base64Image: base64Content, mimeType: mimeType });
 
-                if (result.success && result.text) {
-                    ocrLines = result.text.split('\n').map(function(l) { return l.trim(); }).filter(function(l) { return l; });
-                    ocrClassified = ocrLines.map(function(line) {
-                        return { text: line, type: classifyLine(line) };
-                    });
-                    renderOcrLines();
-                    applyOcrFields(true);
+                if (result.success && result.card) {
+                    fillFormFromAI(result.card);
+                    renderAiSummary(result.card);
                     document.getElementById('ocrResult').classList.add('active');
-                    showNotification('✅ 辨識完成，已自動分類，請確認', 'success');
+                    showNotification('🤖 AI 辨識完成，已填入表單', 'success');
                 } else {
-                    throw new Error(result.error || '無法辨識');
+                    throw new Error(result.error || 'AI 無法辨識');
                 }
             } catch (err) {
-                showNotification('辨識失敗: ' + err.message, 'error');
+                console.error('AI 辨識錯誤:', err);
+                showNotification('AI 辨識失敗: ' + err.message, 'error');
             }
 
             hideLoading();
             btn.disabled = false;
-            btn.innerHTML = '🔍 辨識';
+            btn.innerHTML = '🤖 AI 辨識';
         }
 
-        // ===== OCR 智慧分類 =====
-        var FIELD_OPTIONS = [
-            { v: 'ignore', label: '— 略過 —' },
-            { v: 'name', label: '姓名' },
-            { v: 'nameEn', label: '英文名' },
-            { v: 'company', label: '公司' },
-            { v: 'title', label: '職稱' },
-            { v: 'phone', label: '電話' },
-            { v: 'email', label: 'Email' },
-            { v: 'line', label: 'LINE' },
-            { v: 'website', label: '網站' },
-            { v: 'address', label: '地址' }
-        ];
-
-        var FIELD_MAP = {
-            name: 'cardName', nameEn: 'cardNameEn', company: 'cardCompany',
-            title: 'cardTitle', phone: 'cardPhone', email: 'cardEmail',
-            line: 'cardLine', website: 'cardWebsite', address: 'cardAddress'
-        };
-
-        // 智慧判斷每行屬於哪個欄位
-        function classifyLine(line) {
-            var t = (line || '').trim();
-            if (!t) return 'ignore';
-            var noSpace = t.replace(/\s/g, '');
-
-            // Email
-            if (/[\w.+-]+@[\w-]+\.[\w.-]+/.test(t)) return 'email';
-
-            // LINE（有 line 關鍵字且不是長串中文）
-            if (/line\s*(id)?\s*[:：]/i.test(t)) return 'line';
-            if (/^@[\w._-]+$/.test(t)) return 'line';
-
-            // 網站
-            if (/(www\.|https?:\/\/)/i.test(t) && !t.includes('@')) return 'website';
-            if (/\.(com|net|org|tw|io|co|me)(\.[a-z]{2})?$/i.test(noSpace) && !t.includes('@') && !/[\u4e00-\u9fa5]/.test(t)) return 'website';
-
-            // 電話 / 手機 / 傳真（都歸到電話）
-            var digits = t.replace(/[^\d]/g, '');
-            if (digits.length >= 7) {
-                if (/傳真|fax/i.test(t)) return 'phone';
-                if (/09\d{2}/.test(noSpace)) return 'phone';
-                if (/電話|tel|手機|mobile|phone|☎|📱|☏|✆/i.test(t)) return 'phone';
-                if (/\(\d{2,4}\)/.test(t)) return 'phone';
-                if (/^[\d\s\-()+#．.分機ext]+$/i.test(t)) return 'phone';
-            }
-
-            // 公司
-            var companyKw = ['股份有限公司', '有限公司', '公司', '企業', '集團', '事務所', '工作室',
-                '診所', '醫院', '銀行', '證券', '學院', '大學', '學校', '協會', '基金會', '商行',
-                '工廠', '實業', '科技', '顧問', '設計', '國際', '建設', '裝修', '工程行', '工程',
-                '營造', '建築', '室內', '企業社', '商號', '行號'];
-            for (var i = 0; i < companyKw.length; i++) {
-                if (t.includes(companyKw[i])) return 'company';
-            }
-            if (/\b(Co\.|Corp|Inc\.?|Ltd\.?|LLC|Company|Group|Studio|Design|Associates)\b/i.test(t)) return 'company';
-
-            // 職稱
-            var titleKw = ['董事長', '總經理', '副總', '協理', '經理', '副理', '襄理', '總監', '主任',
-                '主管', '專員', '組長', '課長', '店長', '廠長', '工程師', '設計師', '建築師', '技師',
-                '會計師', '律師', '醫師', '藥師', '護理師', '顧問', '業務', '秘書', '助理', '總裁',
-                '執行長', '負責人', '創辦人', '專案', '督導', '經紀人', '代表', '處長', '副處長'];
-            for (var i = 0; i < titleKw.length; i++) {
-                if (t.includes(titleKw[i])) return 'title';
-            }
-            if (/\b(CEO|CTO|CFO|COO|CMO|VP|Director|Manager|Engineer|Designer|Consultant|President|Founder|Supervisor|Specialist|Sales|Architect)\b/i.test(t)) return 'title';
-
-            // 地址
-            var addrKw = ['市', '縣', '區', '鄉', '鎮', '村', '里', '路', '街', '巷', '弄', '號', '樓', '室'];
-            var addrCount = 0;
-            for (var i = 0; i < addrKw.length; i++) {
-                if (t.includes(addrKw[i])) addrCount++;
-            }
-            if (addrCount >= 3 || /\d+號/.test(t) || /地址|Add|地點/i.test(t)) return 'address';
-            if (/^\d{3,5}[\u4e00-\u9fa5]{2,}/.test(t)) return 'address';
-
-            // 英文名（純英文，首字大寫，1-4 字）
-            if (/^[A-Za-z][A-Za-z.\s'-]{1,28}$/.test(t)) {
-                var words = t.split(/\s+/);
-                if (words.length <= 4 && /^[A-Z]/.test(t)) return 'nameEn';
-            }
-
-            // 中文姓名（2-4 字純中文）
-            if (/^[\u4e00-\u9fa5]{2,4}$/.test(t)) return 'name';
-            // 姓名含空格（王 大明）
-            if (/^[\u4e00-\u9fa5]{1,2}\s+[\u4e00-\u9fa5]{1,3}$/.test(t)) return 'name';
-
-            return 'ignore';
-        }
-
-        function renderOcrLines() {
-            var container = document.getElementById('ocrLines');
-            container.innerHTML = ocrClassified.map(function(item, index) {
-                var opts = FIELD_OPTIONS.map(function(o) {
-                    return '<option value="' + o.v + '"' + (o.v === item.type ? ' selected' : '') + '>' + o.label + '</option>';
-                }).join('');
-                var cls = 'ocr-line' + (item.type === 'ignore' ? ' ignored' : ' assigned');
-                return '<div class="' + cls + '" id="ocrLine' + index + '">' +
-                    '<span class="ocr-line-text">' + escapeHtml(item.text) + '</span>' +
-                    '<select class="ocr-line-select" onchange="changeLineType(' + index + ', this.value)">' + opts + '</select>' +
-                '</div>';
-            }).join('');
-        }
-
-        function changeLineType(index, type) {
-            ocrClassified[index].type = type;
-            var el = document.getElementById('ocrLine' + index);
-            if (el) el.className = 'ocr-line' + (type === 'ignore' ? ' ignored' : ' assigned');
-        }
-
-        // 清理 LINE ID
-        function cleanLineId(s) {
-            var m = s.match(/(?:line|id)[\s:：]*([A-Za-z0-9._@\-]+)/i);
-            if (m) return m[1];
-            return s.replace(/^@/, '').trim();
-        }
-
-        // 清理電話
-        function cleanPhone(s) {
-            return s.replace(/(電話|傳真|手機|專線|TEL|FAX|Mobile|Phone|Tel|Fax|☎|📱|☏|✆|：|:)/gi, '').trim();
-        }
-
-        // 套用分類結果到表單
-        function applyOcrFields(silent) {
-            var groups = {};
-            ocrClassified.forEach(function(item) {
-                if (item.type === 'ignore') return;
-                if (!groups[item.type]) groups[item.type] = [];
-                groups[item.type].push(item.text.trim());
-            });
-
-            Object.keys(FIELD_MAP).forEach(function(type) {
-                if (groups[type] && groups[type].length) {
-                    var val;
-                    if (type === 'address') {
-                        val = groups[type].join('');
-                    } else if (type === 'phone') {
-                        val = groups[type].map(cleanPhone).filter(function(x){return x;}).join(' / ');
-                    } else if (type === 'line') {
-                        val = cleanLineId(groups[type][0]);
-                    } else {
-                        val = groups[type][0];
-                    }
-                    var el = document.getElementById(FIELD_MAP[type]);
-                    if (el) {
-                        el.value = val;
-                        el.style.backgroundColor = 'rgba(6, 214, 160, 0.2)';
-                        setTimeout(function() { el.style.backgroundColor = ''; }, 800);
-                    }
+        // 把 AI 回傳的結構化資料填入表單
+        function fillFormFromAI(c) {
+            var map = {
+                cardName: c.name, cardNameEn: c.nameEn, cardCompany: c.company,
+                cardTitle: c.title, cardMobile: c.mobile, cardPhone: c.phone,
+                cardFax: c.fax, cardTaxId: c.taxId, cardEmail: c.email,
+                cardLine: c.line, cardWebsite: c.website, cardAddress: c.address
+            };
+            Object.keys(map).forEach(function(id) {
+                var el = document.getElementById(id);
+                if (el && map[id]) {
+                    el.value = map[id];
+                    el.style.backgroundColor = 'rgba(6, 214, 160, 0.2)';
+                    setTimeout(function() { el.style.backgroundColor = ''; }, 1000);
                 }
             });
-
-            if (!silent) showNotification('✅ 已套用到表單', 'success');
+            // 備註：把 AI 額外抓到的 notes 併入（不覆蓋既有）
+            if (c.notes) {
+                var notesEl = document.getElementById('cardNotes');
+                if (notesEl && !notesEl.value) notesEl.value = c.notes;
+            }
         }
+
+        // 顯示 AI 辨識摘要
+        function renderAiSummary(c) {
+            var rows = [
+                ['姓名', c.name], ['英文名', c.nameEn], ['公司', c.company],
+                ['職稱', c.title], ['行動', c.mobile], ['市話', c.phone],
+                ['傳真', c.fax], ['統編', c.taxId], ['Email', c.email],
+                ['LINE', c.line], ['網站', c.website], ['地址', c.address],
+                ['備註', c.notes]
+            ];
+            var html = rows.filter(function(r) { return r[1]; }).map(function(r) {
+                return '<div class="ai-summary-row"><span class="ai-summary-label">' + r[0] +
+                    '</span><span class="ai-summary-value">' + escapeHtml(r[1]) + '</span></div>';
+            }).join('');
+            document.getElementById('aiSummary').innerHTML = html || '<div style="color:var(--text-muted)">未擷取到資料</div>';
+        }
+
 
         // ===== 工具 =====
         function escapeHtml(str) {
