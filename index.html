@@ -1586,6 +1586,24 @@
                         return;
                     }
 
+                    // 往外擴張邊距，避免裁到名片邊緣的字（以四角中心為基準各往外推）
+                    var MARGIN = 0.06; // 6% 安全邊距
+                    var cx = (scaled.tl.x + scaled.tr.x + scaled.br.x + scaled.bl.x) / 4;
+                    var cy = (scaled.tl.y + scaled.tr.y + scaled.br.y + scaled.bl.y) / 4;
+                    function expand(p) {
+                        var nx = cx + (p.x - cx) * (1 + MARGIN);
+                        var ny = cy + (p.y - cy) * (1 + MARGIN);
+                        // 限制在圖片範圍內
+                        return {
+                            x: Math.max(0, Math.min(actualW, nx)),
+                            y: Math.max(0, Math.min(actualH, ny))
+                        };
+                    }
+                    scaled = {
+                        tl: expand(scaled.tl), tr: expand(scaled.tr),
+                        br: expand(scaled.br), bl: expand(scaled.bl)
+                    };
+
                     // 計算輸出尺寸
                     var wTop = Math.hypot(scaled.tr.x - scaled.tl.x, scaled.tr.y - scaled.tl.y);
                     var wBot = Math.hypot(scaled.br.x - scaled.bl.x, scaled.br.y - scaled.bl.y);
