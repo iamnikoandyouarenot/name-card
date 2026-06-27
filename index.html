@@ -11,12 +11,13 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
     <script>
-        // OpenCV runtime 就緒旗標（自動裁切用）
+        // OpenCV 載入狀態（自動裁切用）
         window.cvReady = false;
+        window.cvFailed = false;
         window.Module = { onRuntimeInitialized: function() { window.cvReady = true; console.log('✅ OpenCV 就緒'); } };
     </script>
-    <script async src="https://docs.opencv.org/4.10.0/opencv.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/puffinsoft/jscanify@master/src/jscanify.min.js"></script>
+    <script async src="https://docs.opencv.org/4.7.0/opencv.js" onerror="window.cvFailed=true;console.warn('OpenCV 載入失敗');"></script>
+    <script src="https://cdn.jsdelivr.net/gh/puffinsoft/jscanify@master/src/jscanify.min.js" onerror="window.jscanifyFailed=true;"></script>
     <style>
         :root {
             --primary: #06d6a0;
@@ -961,6 +962,15 @@
             transform: scale(0.95);
         }
 
+        .editor-tool-btn.auto-edge {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            border-color: transparent;
+        }
+
+        .editor-tool-btn.auto-edge small {
+            color: rgba(255,255,255,0.9);
+        }
+
         .editor-tool-btn span {
             font-size: 18px;
             line-height: 1;
@@ -1059,6 +1069,7 @@
             <img id="editorImage" src="" alt="編輯中">
         </div>
         <div class="image-editor-tools">
+            <button class="editor-tool-btn auto-edge" id="autoEdgeBtn" onclick="autoDetectEdge(false)" title="自動抓邊"><span>✨</span><small>自動抓邊</small></button>
             <button class="editor-tool-btn" onclick="rotateImage(-90)" title="左轉"><span>↺</span><small>左轉</small></button>
             <button class="editor-tool-btn" onclick="rotateImage(90)" title="右轉"><span>↻</span><small>右轉</small></button>
             <button class="editor-tool-btn" onclick="zoomImage(0.1)" title="放大"><span>➕</span><small>放大</small></button>
@@ -1204,23 +1215,27 @@
             </div>
             <div class="form-row">
                 <div class="form-group">
-                    <label class="form-label">📱 行動電話</label>
+                    <label class="form-label">📱 行動電話1</label>
                     <input type="tel" class="form-input" id="cardMobile" placeholder="0912-345-678">
                 </div>
                 <div class="form-group">
-                    <label class="form-label">☎️ 市話</label>
-                    <input type="tel" class="form-input" id="cardPhone" placeholder="(02)1234-5678">
+                    <label class="form-label">📱 行動電話2</label>
+                    <input type="tel" class="form-input" id="cardMobile2" placeholder="第二支手機">
                 </div>
             </div>
             <div class="form-row">
                 <div class="form-group">
+                    <label class="form-label">☎️ 市話</label>
+                    <input type="tel" class="form-input" id="cardPhone" placeholder="(02)1234-5678">
+                </div>
+                <div class="form-group">
                     <label class="form-label">📠 傳真</label>
                     <input type="tel" class="form-input" id="cardFax" placeholder="(02)1234-5678">
                 </div>
-                <div class="form-group">
-                    <label class="form-label">🔢 統編</label>
-                    <input type="text" class="form-input" id="cardTaxId" placeholder="12345678">
-                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">🔢 統編</label>
+                <input type="text" class="form-input" id="cardTaxId" placeholder="12345678">
             </div>
             <div class="form-row">
                 <div class="form-group">
@@ -1459,27 +1474,34 @@
 
             var reader = new FileReader();
             reader.onload = function(evt) {
-                var src = evt.target.result;
-                showLoading('🔍 偵測名片邊緣...');
-                autoCropCard(src, function(cropped, didCrop) {
-                    hideLoading();
-                    openImageEditor(cropped, 'card', side);
-                    if (didCrop) {
-                        showNotification('✅ 已自動偵測並校正名片', 'success');
+                openImageEditor(evt.target.result, 'card', side);
+                // 進編輯器後若 OpenCV 已就緒，自動嘗試抓邊一次
+                setTimeout(function() {
+                    if (window.cvReady && currentEditType === 'card') {
+                        autoDetectEdge(true);
                     }
-                });
+                }, 300);
             };
             reader.readAsDataURL(file);
         }
 
-        // 自動偵測名片邊緣並透視校正（jscanify + OpenCV）
-        function autoCropCard(imageSrc, callback) {
-            // OpenCV 尚未就緒或函式庫缺失 → 直接用原圖
-            if (!window.cvReady || typeof cv === 'undefined' || typeof jscanify === 'undefined') {
-                console.log('OpenCV 未就緒，略過自動裁切');
-                callback(imageSrc, false);
+        // 在編輯器中對目前圖片自動偵測名片邊緣並校正
+        function autoDetectEdge(silent) {
+            if (currentEditType !== 'card') {
+                if (!silent) showNotification('大頭照不需要抓邊', 'error');
                 return;
             }
+            if (window.cvFailed || window.jscanifyFailed) {
+                if (!silent) showNotification('⚠️ 邊緣偵測元件載入失敗，請用手動裁切', 'error');
+                return;
+            }
+            if (!window.cvReady || typeof cv === 'undefined' || typeof jscanify === 'undefined') {
+                if (!silent) showNotification('⏳ 偵測元件還在載入，請稍候再試', 'error');
+                return;
+            }
+
+            var editorImg = document.getElementById('editorImage');
+            var srcData = editorImg.getAttribute('data-original') || editorImg.src;
 
             var img = new Image();
             img.onload = function() {
@@ -1488,26 +1510,24 @@
                     var scanner = new jscanify();
                     mat = cv.imread(img);
                     var contour = scanner.findPaperContour(mat);
-                    if (!contour) { mat.delete(); callback(imageSrc, false); return; }
+                    if (!contour) throw new Error('找不到名片輪廓');
 
                     var corners = scanner.getCornerPoints(contour);
                     if (!corners || !corners.topLeftCorner || !corners.bottomRightCorner) {
-                        mat.delete(); callback(imageSrc, false); return;
+                        throw new Error('角點不完整');
                     }
 
                     var tl = corners.topLeftCorner, tr = corners.topRightCorner;
                     var bl = corners.bottomLeftCorner, br = corners.bottomRightCorner;
-
-                    var wTop = Math.hypot((tr.x - tl.x), (tr.y - tl.y));
-                    var wBot = Math.hypot((br.x - bl.x), (br.y - bl.y));
-                    var hLeft = Math.hypot((bl.x - tl.x), (bl.y - tl.y));
-                    var hRight = Math.hypot((br.x - tr.x), (br.y - tr.y));
+                    var wTop = Math.hypot(tr.x - tl.x, tr.y - tl.y);
+                    var wBot = Math.hypot(br.x - bl.x, br.y - bl.y);
+                    var hLeft = Math.hypot(bl.x - tl.x, bl.y - tl.y);
+                    var hRight = Math.hypot(br.x - tr.x, br.y - tr.y);
                     var w = Math.max(wTop, wBot), h = Math.max(hLeft, hRight);
-
-                    // 偵測到的區域太小（可能誤判）→ 用原圖
                     var areaRatio = (w * h) / (img.width * img.height);
+
                     if (w < 120 || h < 70 || areaRatio < 0.12) {
-                        mat.delete(); callback(imageSrc, false); return;
+                        throw new Error('偵測範圍太小');
                     }
 
                     var scale = Math.min(1, 1500 / Math.max(w, h));
@@ -1515,15 +1535,40 @@
 
                     var resultCanvas = scanner.extractPaper(img, w, h, corners);
                     mat.delete();
-                    callback(resultCanvas.toDataURL('image/jpeg', 0.9), true);
+                    var croppedData = resultCanvas.toDataURL('image/jpeg', 0.9);
+
+                    // 把校正後的圖載入編輯器
+                    reloadEditorImage(croppedData);
+                    showNotification('✅ 已自動抓邊並校正', 'success');
                 } catch (err) {
-                    console.warn('自動裁切失敗，改用原圖:', err);
+                    console.warn('自動抓邊失敗:', err);
                     if (mat) { try { mat.delete(); } catch (e2) {} }
-                    callback(imageSrc, false);
+                    if (!silent) showNotification('⚠️ 抓邊失敗，請手動拖曳裁切', 'error');
                 }
             };
-            img.onerror = function() { callback(imageSrc, false); };
-            img.src = imageSrc;
+            img.onerror = function() {
+                if (!silent) showNotification('圖片載入失敗', 'error');
+            };
+            img.src = srcData;
+        }
+
+        // 用新圖重建 Cropper
+        function reloadEditorImage(imageSrc) {
+            var editorImg = document.getElementById('editorImage');
+            if (cropper) { cropper.destroy(); cropper = null; }
+            editorImg.src = imageSrc;
+            editorImg.onload = function() {
+                if (cropper) cropper.destroy();
+                cropper = new Cropper(editorImg, {
+                    viewMode: 1, dragMode: 'crop',
+                    aspectRatio: currentEditType === 'avatar' ? 1 : NaN,
+                    autoCropArea: currentEditType === 'avatar' ? 0.85 : 0.95,
+                    restore: false, guides: true, center: true, highlight: false,
+                    background: true, cropBoxMovable: true, cropBoxResizable: true,
+                    toggleDragModeOnDblclick: false, minContainerWidth: 200, minContainerHeight: 200,
+                    zoomable: true, zoomOnTouch: true, zoomOnWheel: true
+                });
+            };
         }
 
         function handleAvatarImage(e) {
@@ -1542,17 +1587,22 @@
             currentEditType = type;
             currentEditSide = side;
 
-            // 更新標題和提示
+            var autoEdgeBtn = document.getElementById('autoEdgeBtn');
+
+            // 更新標題、提示、抓邊按鈕顯示
             if (type === 'avatar') {
                 document.getElementById('editorTitle').textContent = '📐 調整大頭照';
                 document.getElementById('editorHint').textContent = '💡 拖曳調整範圍（固定正方形），可旋轉';
+                if (autoEdgeBtn) autoEdgeBtn.style.display = 'none';
             } else {
                 document.getElementById('editorTitle').textContent = '📐 調整名片範圍';
-                document.getElementById('editorHint').textContent = '💡 拖曳四角框住名片，歪斜可用旋轉拉正';
+                document.getElementById('editorHint').textContent = '💡 按「✨ 自動抓邊」自動框名片，或手動拖曳四角';
+                if (autoEdgeBtn) autoEdgeBtn.style.display = '';
             }
 
             var editorImg = document.getElementById('editorImage');
             editorImg.src = imageSrc;
+            editorImg.setAttribute('data-original', imageSrc); // 保存原圖供抓邊用
 
             document.getElementById('imageEditorOverlay').classList.add('active');
             document.body.style.overflow = 'hidden';
@@ -1730,6 +1780,7 @@
                             company: str(row['公司']),
                             title: str(row['職稱']),
                             mobile: str(row['行動電話']),
+                            mobile2: str(row['行動電話2']),
                             phone: str(row['電話']),
                             fax: str(row['傳真']),
                             taxId: str(row['統編']),
@@ -1879,6 +1930,7 @@
             document.getElementById('cardCompany').value = '';
             document.getElementById('cardTitle').value = '';
             document.getElementById('cardMobile').value = '';
+            document.getElementById('cardMobile2').value = '';
             document.getElementById('cardPhone').value = '';
             document.getElementById('cardFax').value = '';
             document.getElementById('cardTaxId').value = '';
@@ -1945,6 +1997,7 @@
                     '公司': document.getElementById('cardCompany').value.trim(),
                     '職稱': document.getElementById('cardTitle').value.trim(),
                     '行動電話': document.getElementById('cardMobile').value.trim(),
+                    '行動電話2': document.getElementById('cardMobile2').value.trim(),
                     '電話': document.getElementById('cardPhone').value.trim(),
                     '傳真': document.getElementById('cardFax').value.trim(),
                     '統編': document.getElementById('cardTaxId').value.trim(),
@@ -2012,6 +2065,7 @@
                 '<div class="detail-section">' +
                     (card.company ? '<div class="detail-row"><span class="detail-row-icon">🏢</span><span class="detail-row-label">公司</span><span class="detail-row-value">' + escapeHtml(card.company) + '</span></div>' : '') +
                     (card.mobile ? '<div class="detail-row"><span class="detail-row-icon">📱</span><span class="detail-row-label">行動</span><span class="detail-row-value"><a href="tel:' + card.mobile + '">' + escapeHtml(card.mobile) + '</a></span></div>' : '') +
+                    (card.mobile2 ? '<div class="detail-row"><span class="detail-row-icon">📱</span><span class="detail-row-label">行動2</span><span class="detail-row-value"><a href="tel:' + card.mobile2 + '">' + escapeHtml(card.mobile2) + '</a></span></div>' : '') +
                     (card.phone ? '<div class="detail-row"><span class="detail-row-icon">☎️</span><span class="detail-row-label">市話</span><span class="detail-row-value"><a href="tel:' + card.phone + '">' + escapeHtml(card.phone) + '</a></span></div>' : '') +
                     (card.fax ? '<div class="detail-row"><span class="detail-row-icon">📠</span><span class="detail-row-label">傳真</span><span class="detail-row-value">' + escapeHtml(card.fax) + '</span></div>' : '') +
                     (card.lineId ? '<div class="detail-row"><span class="detail-row-icon">💬</span><span class="detail-row-label">LINE</span><span class="detail-row-value line"><a href="https://line.me/ti/p/~' + card.lineId + '" target="_blank">' + escapeHtml(card.lineId) + '</a></span></div>' : '') +
@@ -2047,6 +2101,7 @@
             document.getElementById('cardCompany').value = card.company || '';
             document.getElementById('cardTitle').value = card.title || '';
             document.getElementById('cardMobile').value = card.mobile || '';
+            document.getElementById('cardMobile2').value = card.mobile2 || '';
             document.getElementById('cardPhone').value = card.phone || '';
             document.getElementById('cardFax').value = card.fax || '';
             document.getElementById('cardTaxId').value = card.taxId || '';
@@ -2136,11 +2191,21 @@
 
         // 把 AI 回傳的結構化資料填入表單
         function fillFormFromAI(c) {
+            // 行動電話可能有多支（AI 用 / 分隔），自動拆成兩欄
+            var mobile1 = c.mobile || '';
+            var mobile2 = '';
+            if (mobile1.indexOf('/') !== -1) {
+                var parts = mobile1.split('/').map(function(s) { return s.trim(); }).filter(function(s) { return s; });
+                mobile1 = parts[0] || '';
+                mobile2 = parts.slice(1).join(' / ');
+            }
+
             var map = {
                 cardName: c.name, cardNameEn: c.nameEn, cardCompany: c.company,
-                cardTitle: c.title, cardMobile: c.mobile, cardPhone: c.phone,
-                cardFax: c.fax, cardTaxId: c.taxId, cardEmail: c.email,
-                cardLine: c.line, cardWebsite: c.website, cardAddress: c.address
+                cardTitle: c.title, cardMobile: mobile1, cardMobile2: mobile2,
+                cardPhone: c.phone, cardFax: c.fax, cardTaxId: c.taxId,
+                cardEmail: c.email, cardLine: c.line, cardWebsite: c.website,
+                cardAddress: c.address
             };
             Object.keys(map).forEach(function(id) {
                 var el = document.getElementById(id);
@@ -2150,7 +2215,6 @@
                     setTimeout(function() { el.style.backgroundColor = ''; }, 1000);
                 }
             });
-            // 備註：把 AI 額外抓到的 notes 併入（不覆蓋既有）
             if (c.notes) {
                 var notesEl = document.getElementById('cardNotes');
                 if (notesEl && !notesEl.value) notesEl.value = c.notes;
