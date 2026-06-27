@@ -10,14 +10,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
-    <script>
-        // OpenCV 載入狀態（自動裁切用）
-        window.cvReady = false;
-        window.cvFailed = false;
-        window.Module = { onRuntimeInitialized: function() { window.cvReady = true; console.log('✅ OpenCV 就緒'); } };
-    </script>
-    <script async src="https://docs.opencv.org/4.7.0/opencv.js" onerror="window.cvFailed=true;console.warn('OpenCV 載入失敗');"></script>
-    <script src="https://cdn.jsdelivr.net/gh/puffinsoft/jscanify@master/src/jscanify.min.js" onerror="window.jscanifyFailed=true;"></script>
     <style>
         :root {
             --primary: #06d6a0;
@@ -962,15 +954,6 @@
             transform: scale(0.95);
         }
 
-        .editor-tool-btn.auto-edge {
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            border-color: transparent;
-        }
-
-        .editor-tool-btn.auto-edge small {
-            color: rgba(255,255,255,0.9);
-        }
-
         .editor-tool-btn span {
             font-size: 18px;
             line-height: 1;
@@ -1069,7 +1052,6 @@
             <img id="editorImage" src="" alt="編輯中">
         </div>
         <div class="image-editor-tools">
-            <button class="editor-tool-btn auto-edge" id="autoEdgeBtn" onclick="autoDetectEdge(false)" title="自動抓邊"><span>✨</span><small>自動抓邊</small></button>
             <button class="editor-tool-btn" onclick="rotateImage(-90)" title="左轉"><span>↺</span><small>左轉</small></button>
             <button class="editor-tool-btn" onclick="rotateImage(90)" title="右轉"><span>↻</span><small>右轉</small></button>
             <button class="editor-tool-btn" onclick="zoomImage(0.1)" title="放大"><span>➕</span><small>放大</small></button>
@@ -1475,81 +1457,158 @@
             var reader = new FileReader();
             reader.onload = function(evt) {
                 openImageEditor(evt.target.result, 'card', side);
-                // 進編輯器後若 OpenCV 已就緒，自動嘗試抓邊一次
-                setTimeout(function() {
-                    if (window.cvReady && currentEditType === 'card') {
-                        autoDetectEdge(true);
-                    }
-                }, 300);
             };
             reader.readAsDataURL(file);
         }
 
-        // 在編輯器中對目前圖片自動偵測名片邊緣並校正
-        function autoDetectEdge(silent) {
-            if (currentEditType !== 'card') {
-                if (!silent) showNotification('大頭照不需要抓邊', 'error');
-                return;
-            }
-            if (window.cvFailed || window.jscanifyFailed) {
-                if (!silent) showNotification('⚠️ 邊緣偵測元件載入失敗，請用手動裁切', 'error');
-                return;
-            }
-            if (!window.cvReady || typeof cv === 'undefined' || typeof jscanify === 'undefined') {
-                if (!silent) showNotification('⏳ 偵測元件還在載入，請稍候再試', 'error');
-                return;
-            }
-
-            var editorImg = document.getElementById('editorImage');
-            var srcData = editorImg.getAttribute('data-original') || editorImg.src;
-
-            var img = new Image();
-            img.onload = function() {
-                var mat = null;
-                try {
-                    var scanner = new jscanify();
-                    mat = cv.imread(img);
-                    var contour = scanner.findPaperContour(mat);
-                    if (!contour) throw new Error('找不到名片輪廓');
-
-                    var corners = scanner.getCornerPoints(contour);
-                    if (!corners || !corners.topLeftCorner || !corners.bottomRightCorner) {
-                        throw new Error('角點不完整');
-                    }
-
-                    var tl = corners.topLeftCorner, tr = corners.topRightCorner;
-                    var bl = corners.bottomLeftCorner, br = corners.bottomRightCorner;
-                    var wTop = Math.hypot(tr.x - tl.x, tr.y - tl.y);
-                    var wBot = Math.hypot(br.x - bl.x, br.y - bl.y);
-                    var hLeft = Math.hypot(bl.x - tl.x, bl.y - tl.y);
-                    var hRight = Math.hypot(br.x - tr.x, br.y - tr.y);
-                    var w = Math.max(wTop, wBot), h = Math.max(hLeft, hRight);
-                    var areaRatio = (w * h) / (img.width * img.height);
-
-                    if (w < 120 || h < 70 || areaRatio < 0.12) {
-                        throw new Error('偵測範圍太小');
-                    }
-
-                    var scale = Math.min(1, 1500 / Math.max(w, h));
-                    w = Math.round(w * scale); h = Math.round(h * scale);
-
-                    var resultCanvas = scanner.extractPaper(img, w, h, corners);
-                    mat.delete();
-                    var croppedData = resultCanvas.toDataURL('image/jpeg', 0.9);
-
-                    // 把校正後的圖載入編輯器
-                    reloadEditorImage(croppedData);
-                    showNotification('✅ 已自動抓邊並校正', 'success');
-                } catch (err) {
-                    console.warn('自動抓邊失敗:', err);
-                    if (mat) { try { mat.delete(); } catch (e2) {} }
-                    if (!silent) showNotification('⚠️ 抓邊失敗，請手動拖曳裁切', 'error');
+        // ===== 用 Gemini 回傳的四角座標做透視校正 =====
+        // 解 n 元線性方程組（高斯消去）
+        function solveLinear(A, b) {
+            var n = b.length;
+            for (var i = 0; i < n; i++) {
+                // 找主元
+                var maxRow = i;
+                for (var k = i + 1; k < n; k++) {
+                    if (Math.abs(A[k][i]) > Math.abs(A[maxRow][i])) maxRow = k;
                 }
-            };
-            img.onerror = function() {
-                if (!silent) showNotification('圖片載入失敗', 'error');
-            };
-            img.src = srcData;
+                var tmp = A[i]; A[i] = A[maxRow]; A[maxRow] = tmp;
+                var tb = b[i]; b[i] = b[maxRow]; b[maxRow] = tb;
+                var piv = A[i][i];
+                if (Math.abs(piv) < 1e-10) return null;
+                for (var j = i; j < n; j++) A[i][j] /= piv;
+                b[i] /= piv;
+                for (var r = 0; r < n; r++) {
+                    if (r === i) continue;
+                    var f = A[r][i];
+                    for (var c = i; c < n; c++) A[r][c] -= f * A[i][c];
+                    b[r] -= f * b[i];
+                }
+            }
+            return b;
+        }
+
+        // 求透視變換矩陣 H 使 from 四點映到 to 四點
+        function getPerspectiveTransform(from, to) {
+            var A = [], b = [];
+            for (var i = 0; i < 4; i++) {
+                var x = from[i][0], y = from[i][1], u = to[i][0], v = to[i][1];
+                A.push([x, y, 1, 0, 0, 0, -x * u, -y * u]); b.push(u);
+                A.push([0, 0, 0, x, y, 1, -x * v, -y * v]); b.push(v);
+            }
+            return solveLinear(A, b); // [a,b,c,d,e,f,g,h]
+        }
+
+        // 透視校正：把來源四角拉成正矩形
+        function warpPerspective(srcImg, corners, outW, outH) {
+            var sc = document.createElement('canvas');
+            var sw = srcImg.naturalWidth || srcImg.width;
+            var sh = srcImg.naturalHeight || srcImg.height;
+            sc.width = sw; sc.height = sh;
+            sc.getContext('2d').drawImage(srcImg, 0, 0);
+            var srcData = sc.getContext('2d').getImageData(0, 0, sw, sh).data;
+
+            // 目標矩形 → 來源四角，求反向 H
+            var dstRect = [[0, 0], [outW, 0], [outW, outH], [0, outH]];
+            var srcQuad = [
+                [corners.tl.x, corners.tl.y], [corners.tr.x, corners.tr.y],
+                [corners.br.x, corners.br.y], [corners.bl.x, corners.bl.y]
+            ];
+            var H = getPerspectiveTransform(dstRect, srcQuad);
+            if (!H) return null;
+
+            var out = document.createElement('canvas');
+            out.width = outW; out.height = outH;
+            var octx = out.getContext('2d');
+            var outImg = octx.createImageData(outW, outH);
+            var od = outImg.data;
+
+            for (var y = 0; y < outH; y++) {
+                for (var x = 0; x < outW; x++) {
+                    var denom = H[6] * x + H[7] * y + 1;
+                    var fx = (H[0] * x + H[1] * y + H[2]) / denom;
+                    var fy = (H[3] * x + H[4] * y + H[5]) / denom;
+                    var xi = fx | 0, yi = fy | 0;
+                    var di = (y * outW + x) * 4;
+                    if (xi >= 0 && xi < sw && yi >= 0 && yi < sh) {
+                        var si = (yi * sw + xi) * 4;
+                        od[di] = srcData[si]; od[di + 1] = srcData[si + 1];
+                        od[di + 2] = srcData[si + 2]; od[di + 3] = 255;
+                    } else {
+                        od[di] = 255; od[di + 1] = 255; od[di + 2] = 255; od[di + 3] = 255;
+                    }
+                }
+            }
+            octx.putImageData(outImg, 0, 0);
+            return out;
+        }
+
+        // 驗證四角是否合理（凸、面積夠大）
+        function validateCorners(corners, imgW, imgH) {
+            if (!corners || !corners.tl || !corners.tr || !corners.br || !corners.bl) return false;
+            var pts = [corners.tl, corners.tr, corners.br, corners.bl];
+            for (var i = 0; i < 4; i++) {
+                if (typeof pts[i].x !== 'number' || typeof pts[i].y !== 'number') return false;
+            }
+            // 多邊形面積（鞋帶公式）
+            var area = 0;
+            for (var i = 0; i < 4; i++) {
+                var j = (i + 1) % 4;
+                area += pts[i].x * pts[j].y - pts[j].x * pts[i].y;
+            }
+            area = Math.abs(area) / 2;
+            var ratio = area / (imgW * imgH);
+            return ratio > 0.1 && ratio <= 1.05;
+        }
+
+        // 對名片正面圖套用 AI 座標校正，回傳 Promise(校正後 dataURL 或 null)
+        function applyAiPerspectiveCorrection(imageDataUrl, aiCard) {
+            return new Promise(function(resolve) {
+                var corners = aiCard.corners;
+                if (!corners) { resolve(null); return; }
+
+                var img = new Image();
+                img.onload = function() {
+                    var actualW = img.naturalWidth, actualH = img.naturalHeight;
+                    // 若 AI 用不同尺寸估算，依比例換算座標
+                    var refW = aiCard.imgWidth || actualW;
+                    var refH = aiCard.imgHeight || actualH;
+                    var sx = actualW / refW, sy = actualH / refH;
+                    var scaled = {
+                        tl: { x: corners.tl.x * sx, y: corners.tl.y * sy },
+                        tr: { x: corners.tr.x * sx, y: corners.tr.y * sy },
+                        br: { x: corners.br.x * sx, y: corners.br.y * sy },
+                        bl: { x: corners.bl.x * sx, y: corners.bl.y * sy }
+                    };
+
+                    if (!validateCorners(scaled, actualW, actualH)) {
+                        console.warn('AI 座標不合理，跳過校正');
+                        resolve(null);
+                        return;
+                    }
+
+                    // 計算輸出尺寸
+                    var wTop = Math.hypot(scaled.tr.x - scaled.tl.x, scaled.tr.y - scaled.tl.y);
+                    var wBot = Math.hypot(scaled.br.x - scaled.bl.x, scaled.br.y - scaled.bl.y);
+                    var hL = Math.hypot(scaled.bl.x - scaled.tl.x, scaled.bl.y - scaled.tl.y);
+                    var hR = Math.hypot(scaled.br.x - scaled.tr.x, scaled.br.y - scaled.tr.y);
+                    var outW = Math.round(Math.max(wTop, wBot));
+                    var outH = Math.round(Math.max(hL, hR));
+                    var scale = Math.min(1, 1400 / Math.max(outW, outH));
+                    outW = Math.round(outW * scale); outH = Math.round(outH * scale);
+                    if (outW < 100 || outH < 60) { resolve(null); return; }
+
+                    try {
+                        var canvas = warpPerspective(img, scaled, outW, outH);
+                        if (!canvas) { resolve(null); return; }
+                        resolve(canvas.toDataURL('image/jpeg', 0.9));
+                    } catch (err) {
+                        console.warn('透視校正失敗:', err);
+                        resolve(null);
+                    }
+                };
+                img.onerror = function() { resolve(null); };
+                img.src = imageDataUrl;
+            });
         }
 
         // 用新圖重建 Cropper
@@ -1587,22 +1646,17 @@
             currentEditType = type;
             currentEditSide = side;
 
-            var autoEdgeBtn = document.getElementById('autoEdgeBtn');
-
-            // 更新標題、提示、抓邊按鈕顯示
+            // 更新標題、提示
             if (type === 'avatar') {
                 document.getElementById('editorTitle').textContent = '📐 調整大頭照';
                 document.getElementById('editorHint').textContent = '💡 拖曳調整範圍（固定正方形），可旋轉';
-                if (autoEdgeBtn) autoEdgeBtn.style.display = 'none';
             } else {
                 document.getElementById('editorTitle').textContent = '📐 調整名片範圍';
-                document.getElementById('editorHint').textContent = '💡 按「✨ 自動抓邊」自動框名片，或手動拖曳四角';
-                if (autoEdgeBtn) autoEdgeBtn.style.display = '';
+                document.getElementById('editorHint').textContent = '💡 拖曳四角框住名片，歪斜可用旋轉拉正';
             }
 
             var editorImg = document.getElementById('editorImage');
             editorImg.src = imageSrc;
-            editorImg.setAttribute('data-original', imageSrc); // 保存原圖供抓邊用
 
             document.getElementById('imageEditorOverlay').classList.add('active');
             document.body.style.overflow = 'hidden';
@@ -2175,7 +2229,24 @@
                     fillFormFromAI(result.card);
                     renderAiSummary(result.card);
                     document.getElementById('ocrResult').classList.add('active');
-                    showNotification('🤖 AI 辨識完成，已填入表單', 'success');
+
+                    // 用 AI 回傳的四角座標自動校正名片正面圖
+                    if (result.card.corners) {
+                        showLoading('📐 校正名片中...');
+                        var corrected = await applyAiPerspectiveCorrection(cardFrontImage, result.card);
+                        if (corrected) {
+                            cardFrontImage = corrected;
+                            cardFrontUrl = ''; // 已變更，需重新上傳
+                            var box = document.getElementById('cardFrontBox');
+                            box.innerHTML = '<img src="' + corrected + '" alt="名片">';
+                            box.classList.add('has-image');
+                            showNotification('🤖 辨識完成，已自動校正名片', 'success');
+                        } else {
+                            showNotification('🤖 辨識完成（自動校正略過）', 'success');
+                        }
+                    } else {
+                        showNotification('🤖 AI 辨識完成，已填入表單', 'success');
+                    }
                 } else {
                     throw new Error(result.error || 'AI 無法辨識');
                 }
