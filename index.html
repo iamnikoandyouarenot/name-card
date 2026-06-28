@@ -954,6 +954,15 @@
             transform: scale(0.95);
         }
 
+        .editor-tool-btn.restore-btn {
+            background: linear-gradient(135deg, var(--warning), #d97706);
+            border-color: transparent;
+        }
+
+        .editor-tool-btn.restore-btn small {
+            color: rgba(255,255,255,0.95);
+        }
+
         .editor-tool-btn span {
             font-size: 18px;
             line-height: 1;
@@ -1052,6 +1061,7 @@
             <img id="editorImage" src="" alt="編輯中">
         </div>
         <div class="image-editor-tools">
+            <button class="editor-tool-btn restore-btn" id="restoreBtn" onclick="restoreOriginal()" title="還原原圖"><span>↩️</span><small>還原原圖</small></button>
             <button class="editor-tool-btn" onclick="rotateImage(-90)" title="左轉"><span>↺</span><small>左轉</small></button>
             <button class="editor-tool-btn" onclick="rotateImage(90)" title="右轉"><span>↻</span><small>右轉</small></button>
             <button class="editor-tool-btn" onclick="zoomImage(0.1)" title="放大"><span>➕</span><small>放大</small></button>
@@ -1078,7 +1088,7 @@
                 <div class="logo-icon">📇</div>
                 <div class="logo-text">
                     <h1>名片管理中心</h1>
-                    <p>☁️ 雲端同步版 v6</p>
+                    <p>☁️ AI 智慧辨識版 v8</p>
                 </div>
             </div>
             <div class="header-actions">
@@ -1127,11 +1137,11 @@
             <div class="image-section">
                 <div class="image-section-title">📸 名片照片</div>
                 <div class="image-row">
-                    <div class="image-box" id="cardFrontBox">
+                    <div class="image-box" id="cardFrontBox" onclick="editCardImage('front')">
                         <span class="image-box-icon">📄</span>
                         <span class="image-box-label">正面</span>
                     </div>
-                    <div class="image-box" id="cardBackBox">
+                    <div class="image-box" id="cardBackBox" onclick="editCardImage('back')">
                         <span class="image-box-icon">📄</span>
                         <span class="image-box-label">背面</span>
                     </div>
@@ -1284,6 +1294,8 @@
         let currentCategory = '全部';
         let cardFrontImage = null;
         let cardBackImage = null;
+        let cardFrontOriginal = null;  // 原始拍攝圖（供還原）
+        let cardBackOriginal = null;
         let avatarImage = null;
         let cardFrontUrl = '';
         let cardBackUrl = '';
@@ -1456,9 +1468,38 @@
 
             var reader = new FileReader();
             reader.onload = function(evt) {
-                openImageEditor(evt.target.result, 'card', side);
+                var src = evt.target.result;
+                // 保存原始拍攝圖，供日後「還原原圖」
+                if (side === 'front') cardFrontOriginal = src;
+                else cardBackOriginal = src;
+                openImageEditor(src, 'card', side);
             };
             reader.readAsDataURL(file);
+        }
+
+        // 點名片縮圖 → 重新編輯該圖
+        function editCardImage(side) {
+            var hasImg = side === 'front' ? (cardFrontImage || cardFrontUrl) : (cardBackImage || cardBackUrl);
+            if (!hasImg) return; // 沒圖則不動作（請用拍照按鈕）
+
+            var src;
+            if (side === 'front') {
+                src = cardFrontImage || getDriveImageUrl(cardFrontUrl);
+            } else {
+                src = cardBackImage || getDriveImageUrl(cardBackUrl);
+            }
+            openImageEditor(src, 'card', side);
+        }
+
+        // 還原成原始拍攝照片，手動重裁
+        function restoreOriginal() {
+            var orig = currentEditSide === 'front' ? cardFrontOriginal : cardBackOriginal;
+            if (!orig) {
+                showNotification('沒有原圖可還原', 'error');
+                return;
+            }
+            reloadEditorImage(orig);
+            showNotification('↩️ 已還原原始照片，請手動拖曳裁切', 'success');
         }
 
         // ===== 用 Gemini 回傳的四角座標做透視校正 =====
@@ -1664,13 +1705,19 @@
             currentEditType = type;
             currentEditSide = side;
 
+            var restoreBtn = document.getElementById('restoreBtn');
+
             // 更新標題、提示
             if (type === 'avatar') {
                 document.getElementById('editorTitle').textContent = '📐 調整大頭照';
                 document.getElementById('editorHint').textContent = '💡 拖曳調整範圍（固定正方形），可旋轉';
+                if (restoreBtn) restoreBtn.style.display = 'none';
             } else {
                 document.getElementById('editorTitle').textContent = '📐 調整名片範圍';
-                document.getElementById('editorHint').textContent = '💡 拖曳四角框住名片，歪斜可用旋轉拉正';
+                document.getElementById('editorHint').textContent = '💡 拖曳四角框住名片，切不好可按「↩️ 還原原圖」重裁';
+                // 有原圖才顯示還原按鈕
+                var hasOrig = side === 'front' ? cardFrontOriginal : cardBackOriginal;
+                if (restoreBtn) restoreBtn.style.display = hasOrig ? '' : 'none';
             }
 
             var editorImg = document.getElementById('editorImage');
@@ -2015,6 +2062,8 @@
             
             cardFrontImage = null;
             cardBackImage = null;
+            cardFrontOriginal = null;
+            cardBackOriginal = null;
             avatarImage = null;
             cardFrontUrl = '';
             cardBackUrl = '';
@@ -2189,6 +2238,8 @@
             avatarUrl = card.avatarUrl || '';
             cardFrontImage = null;
             cardBackImage = null;
+            cardFrontOriginal = null;
+            cardBackOriginal = null;
             avatarImage = null;
 
             if (cardFrontUrl) {
