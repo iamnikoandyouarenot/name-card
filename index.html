@@ -857,6 +857,43 @@
             flex: 1;
         }
 
+        /* 分享 Modal */
+        .share-hint {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        .share-qr {
+            display: flex;
+            justify-content: center;
+            padding: 16px;
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 16px;
+        }
+
+        .share-qr img, .share-qr canvas {
+            display: block;
+        }
+
+        .share-url-box {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 4px;
+        }
+
+        .share-url {
+            font-size: 12px;
+            color: var(--primary);
+            word-break: break-all;
+            line-height: 1.4;
+        }
+
         /* 圖片編輯器 Modal */
         .image-editor-overlay {
             position: fixed;
@@ -1096,6 +1133,7 @@
                     <span class="sync-dot" id="syncDot"></span>
                     <span id="syncText">離線</span>
                 </div>
+                <button class="btn btn-secondary btn-icon" onclick="openShareModal()" title="分享給同事">📤</button>
                 <button class="btn btn-secondary btn-icon" onclick="syncFromCloud()" title="同步資料">🔄</button>
                 <button class="btn btn-primary" onclick="openAddModal()">➕ 新增</button>
             </div>
@@ -1284,6 +1322,26 @@
         </div>
     </div>
 
+    <!-- 分享 Modal -->
+    <div class="modal-overlay" id="shareModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>📤 分享給同事</h2>
+                <button class="modal-close" onclick="closeShareModal()">✕</button>
+            </div>
+            <p class="share-hint">同事掃描 QR code 或開啟下方網址即可使用，免設定、免登入</p>
+            <div class="share-qr" id="shareQr"></div>
+            <div class="share-url-box">
+                <span class="share-url" id="shareUrl"></span>
+            </div>
+            <div class="form-actions">
+                <button class="btn btn-secondary" onclick="copyShareUrl()">📋 複製網址</button>
+                <button class="btn btn-primary" onclick="shareViaSystem()">📲 分享連結</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script>
         // ===== API 設定 =====
         const API_URL = 'https://script.google.com/macros/s/AKfycbxsDT1GpMUWkLTh8HQIB6QMVOM6aMXS2IvBy1hpWy_y5mgyOakb__p0XQm1cn2q6N0LVQ/exec';
@@ -1357,6 +1415,58 @@
 
         function closeCategoryModal() {
             document.getElementById('categoryModal').classList.remove('active');
+        }
+
+        // ===== 分享功能 =====
+        var shareQrRendered = false;
+
+        function openShareModal() {
+            var url = window.location.href.split('#')[0].split('?')[0];
+            document.getElementById('shareUrl').textContent = url;
+
+            // 產生 QR code（只產一次）
+            var qrBox = document.getElementById('shareQr');
+            qrBox.innerHTML = '';
+            try {
+                new QRCode(qrBox, {
+                    text: url,
+                    width: 200,
+                    height: 200,
+                    colorDark: '#0f172a',
+                    colorLight: '#ffffff',
+                    correctLevel: QRCode.CorrectLevel.M
+                });
+            } catch (e) {
+                qrBox.innerHTML = '<span style="color:#64748b;font-size:13px;">QR code 載入失敗，請用下方網址</span>';
+            }
+
+            document.getElementById('shareModal').classList.add('active');
+        }
+
+        function closeShareModal() {
+            document.getElementById('shareModal').classList.remove('active');
+        }
+
+        function copyShareUrl() {
+            var url = document.getElementById('shareUrl').textContent;
+            navigator.clipboard.writeText(url).then(function() {
+                showNotification('✅ 網址已複製', 'success');
+            }).catch(function() {
+                showNotification('複製失敗，請手動選取', 'error');
+            });
+        }
+
+        function shareViaSystem() {
+            var url = document.getElementById('shareUrl').textContent;
+            if (navigator.share) {
+                navigator.share({
+                    title: '名片管理中心',
+                    text: '一起用這個名片管理工具，掃 QR code 或開連結就能用：',
+                    url: url
+                }).catch(function() {});
+            } else {
+                copyShareUrl();
+            }
         }
 
         function renderCategoryList() {
@@ -2390,12 +2500,14 @@
                 closeAddModal();
                 closeDetailModal();
                 closeCategoryModal();
+                closeShareModal();
             }
         });
 
         document.getElementById('addModal').addEventListener('click', function(e) { if (e.target === this) closeAddModal(); });
         document.getElementById('detailModal').addEventListener('click', function(e) { if (e.target === this) closeDetailModal(); });
         document.getElementById('categoryModal').addEventListener('click', function(e) { if (e.target === this) closeCategoryModal(); });
+        document.getElementById('shareModal').addEventListener('click', function(e) { if (e.target === this) closeShareModal(); });
     </script>
 </body>
 </html>
