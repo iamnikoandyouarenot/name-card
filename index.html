@@ -5,53 +5,86 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#0f172a">
+    <meta name="theme-color" content="#191b21">
     <title>名片管理中心</title>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
     <style>
         :root {
-            --primary: #06d6a0;
-            --primary-dark: #00b890;
-            --accent: #3b82f6;
-            --bg-dark: #0f172a;
-            --bg-card: rgba(255,255,255,0.06);
-            --text-primary: #f8fafc;
-            --text-secondary: #94a3b8;
-            --text-muted: #64748b;
-            --border: rgba(255,255,255,0.1);
-            --danger: #ef4444;
-            --success: #22c55e;
-            --warning: #f59e0b;
+            /* 墨案印鑑設計系統 */
+            --ink: #191b21;          /* 桌面墨色 */
+            --ink-2: #20242c;        /* 浮起表面 */
+            --ink-3: #2a2f39;        /* 再浮起 */
+            --paper: #f6f2e8;        /* 名片紙白 */
+            --paper-2: #efe9db;
+            --paper-edge: #ddd5c2;   /* 紙緣 */
+            --ink-txt: #29251a;      /* 紙上墨字 */
+            --ink-txt-2: #756f5f;    /* 紙上次要字 */
+            --seal: #c8402a;         /* 印泥紅 */
+            --seal-deep: #a93321;
+            --jade: #2f9f79;         /* 青瓷綠（主行動）*/
+            --jade-deep: #237a5c;
+            --text: #ece7da;         /* 墨上紙白字 */
+            --text-2: #b5afa0;
+            --text-3: #857f70;
+            --line: rgba(236,231,218,0.1);
+
+            /* 相容舊變數名 */
+            --primary: var(--jade);
+            --primary-dark: var(--jade-deep);
+            --accent: var(--seal);
+            --bg-dark: var(--ink);
+            --bg-card: var(--ink-2);
+            --text-primary: var(--text);
+            --text-secondary: var(--text-2);
+            --text-muted: var(--text-3);
+            --border: var(--line);
+            --danger: #d05252;
+            --success: var(--jade);
+            --warning: #d9930d;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
+        html { -webkit-text-size-adjust: 100%; }
+
         body {
             font-family: 'Noto Sans TC', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+            background:
+                radial-gradient(1200px 500px at 85% -10%, rgba(47,159,121,0.06), transparent 60%),
+                var(--ink);
             min-height: 100vh;
-            color: var(--text-primary);
+            color: var(--text);
             overflow-x: hidden;
             padding-bottom: env(safe-area-inset-bottom);
+            line-height: 1.45;
         }
 
+        /* 極淡紙纖噪點，讓墨面有材質 */
         body::before {
             content: '';
             position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: 
-                radial-gradient(circle at 20% 20%, rgba(6, 214, 160, 0.08) 0%, transparent 40%),
-                radial-gradient(circle at 80% 80%, rgba(59, 130, 246, 0.08) 0%, transparent 40%);
+            inset: 0;
+            background-image: repeating-linear-gradient(
+                0deg,
+                rgba(255,255,255,0.012) 0px, rgba(255,255,255,0.012) 1px,
+                transparent 1px, transparent 3px);
             pointer-events: none;
             z-index: 0;
         }
 
+        :focus-visible {
+            outline: 2px solid var(--jade);
+            outline-offset: 2px;
+            border-radius: 4px;
+        }
+
+        /* ── Header ─────────────────────── */
         .header {
-            background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--border);
+            background: rgba(25,27,33,0.92);
+            backdrop-filter: blur(18px);
+            border-bottom: 1px solid var(--line);
             padding: 12px 16px;
             padding-top: calc(12px + env(safe-area-inset-top));
             position: sticky;
@@ -67,166 +100,165 @@
             gap: 10px;
         }
 
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
+        .logo { display: flex; align-items: center; gap: 11px; }
 
+        /* 朱紅印章 logo */
         .logo-icon {
             width: 40px;
             height: 40px;
-            background: linear-gradient(135deg, var(--primary), var(--accent));
-            border-radius: 10px;
+            background: linear-gradient(160deg, var(--seal), var(--seal-deep));
+            border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 20px;
+            font-size: 21px;
+            font-family: 'Noto Serif TC', serif;
+            font-weight: 700;
+            color: #fdf9ef;
+            transform: rotate(-3deg);
+            box-shadow: inset 0 0 0 1.5px rgba(253,249,239,0.28), 0 3px 10px rgba(0,0,0,0.35);
+            flex-shrink: 0;
         }
 
-        .logo-text h1 { font-size: 18px; font-weight: 700; }
-        .logo-text p { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
-
-        .header-actions {
-            display: flex;
-            gap: 8px;
-            align-items: center;
+        .logo-text h1 {
+            font-family: 'Noto Serif TC', serif;
+            font-size: 19px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
         }
+        .logo-text p { font-size: 10.5px; color: var(--text-3); margin-top: 2px; letter-spacing: 0.06em; }
 
+        .header-actions { display: flex; gap: 8px; align-items: center; }
+
+        /* ── 按鈕 ─────────────────────── */
         .btn {
             padding: 8px 14px;
             border-radius: 8px;
             font-size: 13px;
             font-weight: 500;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: background 0.18s, transform 0.12s, border-color 0.18s;
             display: flex;
             align-items: center;
             gap: 5px;
             border: none;
             font-family: inherit;
         }
+        .btn:active { transform: scale(0.97); }
 
         .btn-primary {
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            color: white;
+            background: linear-gradient(150deg, var(--jade), var(--jade-deep));
+            color: #f4fbf7;
+            font-weight: 600;
         }
+        .btn-primary:hover { filter: brightness(1.08); }
 
         .btn-secondary {
-            background: rgba(255,255,255,0.1);
-            color: var(--text-primary);
-            border: 1px solid var(--border);
+            background: var(--ink-3);
+            color: var(--text);
+            border: 1px solid var(--line);
         }
+        .btn-secondary:hover { border-color: rgba(236,231,218,0.25); }
 
         .btn-danger {
-            background: rgba(239, 68, 68, 0.1);
-            color: #f87171;
-            border: 1px solid rgba(239, 68, 68, 0.3);
+            background: rgba(208,82,82,0.1);
+            color: #e08a8a;
+            border: 1px solid rgba(208,82,82,0.32);
         }
 
-        .btn-icon {
-            padding: 8px;
-            min-width: 36px;
-            justify-content: center;
-        }
+        .btn-icon { padding: 8px; min-width: 36px; justify-content: center; }
+        .btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        /* ── 搜尋與分類 ─────────────────── */
+        .search-section { display: flex; gap: 10px; flex-wrap: wrap; }
 
-        .search-section {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        .search-box {
-            flex: 1;
-            min-width: 180px;
-            position: relative;
-        }
+        .search-box { flex: 1; min-width: 180px; position: relative; }
 
         .search-box input {
             width: 100%;
-            padding: 10px 14px 10px 38px;
-            background: rgba(255,255,255,0.08);
-            border: 1px solid var(--border);
+            padding: 10px 14px 10px 36px;
+            background: var(--ink-2);
+            border: 1px solid var(--line);
             border-radius: 8px;
-            color: var(--text-primary);
+            color: var(--text);
             font-size: 14px;
             outline: none;
+            transition: border-color 0.18s;
         }
-
-        .search-box input:focus { border-color: var(--primary); }
-        .search-box input::placeholder { color: var(--text-muted); }
+        .search-box input:focus { border-color: var(--jade); box-shadow: 0 0 0 3px rgba(47,159,121,0.12); }
+        .search-box input::placeholder { color: var(--text-3); }
         .search-box::before {
-            content: '🔍';
+            content: '⌕';
             position: absolute;
             left: 12px;
             top: 50%;
-            transform: translateY(-50%);
-            font-size: 14px;
+            transform: translateY(-52%);
+            font-size: 17px;
+            color: var(--text-3);
         }
 
-        .categories {
-            display: flex;
-            gap: 6px;
-            flex-wrap: wrap;
-            align-items: center;
-        }
+        .categories { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
 
         .category-btn {
-            padding: 6px 12px;
-            border-radius: 16px;
+            padding: 6px 13px;
+            border-radius: 999px;
             font-size: 12px;
             cursor: pointer;
-            transition: all 0.2s;
-            background: rgba(255,255,255,0.08);
-            color: var(--text-secondary);
-            border: 1px solid var(--border);
+            transition: all 0.18s;
+            background: transparent;
+            color: var(--text-2);
+            border: 1px solid var(--line);
+            font-family: inherit;
         }
-
+        .category-btn:hover { border-color: rgba(236,231,218,0.3); color: var(--text); }
         .category-btn.active {
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            color: white;
-            border-color: transparent;
+            background: var(--jade);
+            color: #f4fbf7;
+            border-color: var(--jade);
             font-weight: 600;
         }
 
         .category-manage-btn {
             padding: 6px 10px;
-            border-radius: 16px;
+            border-radius: 999px;
             font-size: 12px;
             cursor: pointer;
-            background: rgba(255,255,255,0.05);
-            color: var(--text-muted);
-            border: 1px dashed var(--border);
+            background: transparent;
+            color: var(--text-3);
+            border: 1px dashed var(--line);
+            font-family: inherit;
         }
 
-        .main {
-            padding: 16px;
-            position: relative;
-            z-index: 1;
-        }
+        /* ── 主區 ─────────────────────── */
+        .main { padding: 16px; position: relative; z-index: 1; max-width: 1180px; margin: 0 auto; }
 
         .stats {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 10px;
-            margin-bottom: 16px;
+            margin-bottom: 18px;
         }
 
         .stat-card {
-            background: var(--bg-card);
-            border-radius: 12px;
-            padding: 12px;
-            border: 1px solid var(--border);
+            background: var(--ink-2);
+            border-radius: 10px;
+            padding: 12px 10px 10px;
+            border: 1px solid var(--line);
             text-align: center;
         }
 
-        .stat-label { font-size: 11px; color: var(--text-secondary); margin-bottom: 4px; }
-        .stat-value { font-size: 24px; font-weight: 700; }
-        .stat-value.primary { color: var(--primary); }
-        .stat-value.accent { color: var(--accent); }
+        .stat-label { font-size: 10.5px; color: var(--text-3); margin-bottom: 4px; letter-spacing: 0.08em; }
+        .stat-value {
+            font-family: 'Noto Serif TC', serif;
+            font-size: 26px;
+            font-weight: 700;
+            line-height: 1.1;
+            font-variant-numeric: tabular-nums;
+        }
+        .stat-value.primary { color: var(--jade); }
+        .stat-value.accent { color: var(--seal); }
 
+        /* ── 名片（紙白卡躺在墨桌上）──────── */
         .cards-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -234,92 +266,105 @@
         }
 
         .card {
-            background: var(--bg-card);
-            border-radius: 14px;
+            background: linear-gradient(178deg, var(--paper) 88%, var(--paper-2));
+            border-radius: 10px;
             padding: 16px;
-            border: 1px solid var(--border);
+            border: 1px solid var(--paper-edge);
             cursor: pointer;
-            transition: all 0.3s;
+            transition: transform 0.22s, box-shadow 0.22s;
             position: relative;
+            color: var(--ink-txt);
+            box-shadow: 0 1px 0 rgba(0,0,0,0.2), 0 6px 16px rgba(0,0,0,0.3);
         }
 
         .card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 15px 30px rgba(0,0,0,0.3);
-            border-color: rgba(6, 214, 160, 0.3);
+            transform: translateY(-3px) rotate(-0.2deg);
+            box-shadow: 0 2px 0 rgba(0,0,0,0.18), 0 16px 30px rgba(0,0,0,0.42);
         }
 
+        /* 分類：小印風格章 */
         .card-category {
             position: absolute;
             top: 12px;
             right: 12px;
             padding: 3px 8px;
-            border-radius: 10px;
+            border-radius: 4px;
             font-size: 10px;
-            font-weight: 600;
-            background: rgba(255,255,255,0.1);
-            color: var(--text-secondary);
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            background: transparent;
+            color: var(--seal);
+            border: 1.5px solid rgba(200,64,42,0.55);
         }
 
-        .card-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 12px;
-        }
+        .card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
 
+        /* 朱紅姓氏印章 */
         .card-avatar {
             width: 46px;
             height: 46px;
-            border-radius: 12px;
+            border-radius: 7px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 20px;
+            font-size: 22px;
             font-weight: 700;
-            background: linear-gradient(135deg, var(--primary), var(--accent));
-            color: white;
+            font-family: 'Noto Serif TC', serif;
+            background: linear-gradient(160deg, var(--seal), var(--seal-deep));
+            color: #fdf9ef;
             background-size: cover;
             background-position: center;
             flex-shrink: 0;
+            transform: rotate(-2.5deg);
+            box-shadow: inset 0 0 0 1.5px rgba(253,249,239,0.26), 0 2px 6px rgba(0,0,0,0.22);
         }
 
-        .card-name { font-size: 16px; font-weight: 700; margin-bottom: 2px; }
-        .card-name-en { font-size: 12px; color: var(--text-muted); }
-        .card-title { font-size: 12px; color: var(--text-secondary); }
-        .card-company { font-size: 13px; color: var(--text-secondary); margin-bottom: 10px; }
+        .card-name {
+            font-family: 'Noto Serif TC', serif;
+            font-size: 17px;
+            font-weight: 700;
+            margin-bottom: 1px;
+            color: var(--ink-txt);
+            letter-spacing: 0.02em;
+        }
+        .card-name-en { font-size: 12px; color: var(--ink-txt-2); }
+        .card-title { font-size: 12px; color: var(--ink-txt-2); }
+        .card-company { font-size: 13px; color: #4c4638; margin-bottom: 10px; font-weight: 500; }
+
         .card-contacts { display: flex; flex-direction: column; gap: 6px; }
-        .card-contact { font-size: 12px; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; }
+        .card-contact {
+            font-size: 12.5px;
+            color: #4c4638;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-variant-numeric: tabular-nums;
+        }
 
         .card-line {
-            background: rgba(6, 214, 160, 0.1);
+            background: rgba(47,159,121,0.1);
             padding: 6px 10px;
             border-radius: 6px;
-            border: 1px solid rgba(6, 214, 160, 0.2);
-            color: var(--primary);
-            font-weight: 500;
+            border: 1px solid rgba(47,159,121,0.3);
+            color: var(--jade-deep);
+            font-weight: 600;
         }
 
-        .card-images {
-            display: flex;
-            gap: 6px;
-            margin-top: 10px;
-        }
-
+        .card-images { display: flex; gap: 6px; margin-top: 10px; }
         .card-image-thumb {
             flex: 1;
             height: 50px;
-            border-radius: 6px;
+            border-radius: 5px;
             background-size: cover;
             background-position: center;
-            border: 1px solid var(--border);
+            border: 1px solid var(--paper-edge);
         }
 
-        /* Modal */
+        /* ── Modal ─────────────────────── */
         .modal-overlay {
             position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.8);
+            inset: 0;
+            background: rgba(12,13,17,0.82);
             backdrop-filter: blur(8px);
             display: none;
             align-items: flex-start;
@@ -329,17 +374,17 @@
             padding-top: calc(20px + env(safe-area-inset-top));
             overflow-y: auto;
         }
-
         .modal-overlay.active { display: flex; }
 
         .modal {
-            background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
-            border-radius: 16px;
+            background: var(--ink-2);
+            border-radius: 14px;
             padding: 20px;
             width: 100%;
             max-width: 480px;
-            border: 1px solid var(--border);
+            border: 1px solid var(--line);
             margin-bottom: 20px;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.5);
         }
 
         .modal-header {
@@ -347,134 +392,106 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--line);
         }
-
-        .modal-header h2 { font-size: 18px; font-weight: 700; }
+        .modal-header h2 {
+            font-family: 'Noto Serif TC', serif;
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: 0.03em;
+        }
 
         .modal-close {
             width: 32px;
             height: 32px;
             border-radius: 8px;
-            background: rgba(255,255,255,0.1);
-            border: none;
-            color: var(--text-secondary);
-            font-size: 16px;
+            background: var(--ink-3);
+            border: 1px solid var(--line);
+            color: var(--text-2);
+            font-size: 15px;
             cursor: pointer;
         }
 
-        .form-group { margin-bottom: 12px; }
+        /* ── 表單 ─────────────────────── */
+        .form-group { margin-bottom: 13px; }
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .form-label { display: block; font-size: 12px; color: var(--text-secondary); margin-bottom: 5px; }
+        .form-label {
+            display: block;
+            font-size: 11.5px;
+            color: var(--text-2);
+            margin-bottom: 5px;
+            letter-spacing: 0.05em;
+        }
 
         .form-input {
             width: 100%;
             padding: 10px 12px;
-            background: rgba(255,255,255,0.08);
-            border: 1px solid var(--border);
+            background: var(--ink);
+            border: 1px solid var(--line);
             border-radius: 8px;
-            color: var(--text-primary);
+            color: var(--text);
             font-size: 14px;
             outline: none;
             font-family: inherit;
+            transition: border-color 0.18s, background-color 0.4s;
         }
-
-        .form-input:focus { border-color: var(--primary); }
-        .form-input::placeholder { color: var(--text-muted); }
-        .form-input.highlight { background: rgba(6, 214, 160, 0.1); border-color: rgba(6, 214, 160, 0.3); }
+        .form-input:focus { border-color: var(--jade); box-shadow: 0 0 0 3px rgba(47,159,121,0.12); }
+        .form-input::placeholder { color: var(--text-3); }
+        .form-input.highlight { background: rgba(47,159,121,0.08); border-color: rgba(47,159,121,0.35); }
         textarea.form-input { resize: vertical; min-height: 60px; }
 
-        .form-input-row {
-            display: flex;
-            gap: 8px;
-        }
-
+        .form-input-row { display: flex; gap: 8px; }
         .form-input-row .form-input { flex: 1; }
+        .form-input-row .btn { padding: 10px 12px; flex-shrink: 0; }
 
-        .form-input-row .btn {
-            padding: 10px 12px;
-            flex-shrink: 0;
-        }
+        .form-actions { display: flex; gap: 10px; margin-top: 16px; }
+        .form-actions .btn { flex: 1; justify-content: center; padding: 12px; font-size: 14px; }
 
-        .form-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 16px;
-        }
-
-        .form-actions .btn {
-            flex: 1;
-            justify-content: center;
-            padding: 12px;
-        }
-
-        /* 圖片上傳區 */
+        /* ── 圖片上傳區 ─────────────────── */
         .image-section {
             margin-bottom: 14px;
             padding: 12px;
-            background: rgba(255,255,255,0.04);
+            background: var(--ink);
             border-radius: 10px;
-            border: 1px dashed var(--border);
+            border: 1px dashed var(--line);
         }
-
         .image-section-title {
-            font-size: 13px;
+            font-size: 12.5px;
             font-weight: 600;
             margin-bottom: 10px;
-            color: var(--text-primary);
+            color: var(--text-2);
+            letter-spacing: 0.06em;
         }
 
-        .image-row {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
+        .image-row { display: flex; gap: 10px; margin-bottom: 10px; }
 
         .image-box {
             flex: 1;
             aspect-ratio: 16/10;
             border-radius: 8px;
-            background: rgba(255,255,255,0.06);
-            border: 2px dashed var(--border);
+            background: var(--ink-2);
+            border: 1.5px dashed var(--line);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             overflow: hidden;
             position: relative;
+            cursor: pointer;
         }
+        .image-box.has-image { border-style: solid; border-color: var(--jade); }
+        .image-box img { width: 100%; height: 100%; object-fit: cover; }
+        .image-box-label { font-size: 11px; color: var(--text-3); text-align: center; }
+        .image-box-icon { font-size: 22px; margin-bottom: 4px; opacity: 0.7; }
 
-        .image-box.has-image {
-            border-style: solid;
-            border-color: var(--primary);
-        }
-
-        .image-box img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .image-box-label {
-            font-size: 11px;
-            color: var(--text-muted);
-            text-align: center;
-        }
-
-        .image-box-icon {
-            font-size: 24px;
-            margin-bottom: 4px;
-        }
-
-        .image-btns {
-            display: flex;
-            gap: 8px;
-        }
+        .image-btns { display: flex; gap: 8px; }
 
         .image-btn {
             flex: 1;
-            padding: 8px;
+            padding: 9px 8px;
             border-radius: 8px;
-            border: none;
+            border: 1px solid var(--line);
             font-size: 12px;
             cursor: pointer;
             font-family: inherit;
@@ -482,329 +499,274 @@
             align-items: center;
             justify-content: center;
             gap: 4px;
+            background: var(--ink-3);
+            color: var(--text);
+            transition: border-color 0.18s, filter 0.18s;
         }
+        .image-btn:hover { border-color: rgba(236,231,218,0.28); }
+        .image-btn.camera { background: var(--ink-3); }
+        .image-btn.gallery { background: var(--ink-2); color: var(--text-2); }
+        .image-btn.recognize {
+            background: linear-gradient(150deg, var(--jade), var(--jade-deep));
+            color: #f4fbf7;
+            border-color: transparent;
+            font-weight: 600;
+        }
+        .image-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
-        .image-btn.camera { background: linear-gradient(135deg, var(--accent), #2563eb); color: white; }
-        .image-btn.gallery { background: rgba(255,255,255,0.1); color: var(--text-primary); border: 1px solid var(--border); }
-        .image-btn.recognize { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; }
-        .image-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-
-        /* 大頭照 */
+        /* ── 大頭照 ─────────────────────── */
         .avatar-section {
             display: flex;
             align-items: center;
             gap: 12px;
             margin-bottom: 14px;
             padding: 12px;
-            background: rgba(255,255,255,0.04);
+            background: var(--ink);
             border-radius: 10px;
+            border: 1px dashed var(--line);
         }
 
         .avatar-preview {
             width: 60px;
             height: 60px;
-            border-radius: 12px;
-            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            background: var(--ink-2);
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 24px;
             background-size: cover;
             background-position: center;
-            border: 2px dashed var(--border);
+            border: 1.5px dashed var(--line);
             flex-shrink: 0;
         }
-
-        .avatar-preview.has-image { border-style: solid; border-color: var(--primary); }
+        .avatar-preview.has-image { border-style: solid; border-color: var(--jade); }
         .avatar-info { flex: 1; }
-        .avatar-info h4 { font-size: 13px; margin-bottom: 3px; }
-        .avatar-info p { font-size: 11px; color: var(--text-muted); margin-bottom: 6px; }
+        .avatar-info h4 { font-size: 13px; margin-bottom: 3px; color: var(--text); }
+        .avatar-info p { font-size: 11px; color: var(--text-3); margin-bottom: 6px; }
 
-        .avatar-btns {
-            display: flex;
-            gap: 6px;
-        }
-
+        .avatar-btns { display: flex; gap: 6px; }
         .avatar-btn {
             padding: 6px 10px;
-            background: rgba(255,255,255,0.1);
-            border: 1px solid var(--border);
+            background: var(--ink-3);
+            border: 1px solid var(--line);
             border-radius: 6px;
-            color: var(--text-primary);
+            color: var(--text);
             font-size: 11px;
             cursor: pointer;
             font-family: inherit;
         }
 
-        /* OCR 結果 - 可選擇欄位 */
+        /* ── AI 辨識結果 ─────────────────── */
         .ocr-result {
             margin-top: 10px;
             padding: 12px;
-            background: rgba(6, 214, 160, 0.1);
+            background: rgba(47,159,121,0.07);
             border-radius: 8px;
-            border: 1px solid rgba(6, 214, 160, 0.2);
+            border: 1px solid rgba(47,159,121,0.22);
             display: none;
         }
-
         .ocr-result.active { display: block; }
-        
-        .ocr-result h4 { 
-            color: var(--primary); 
-            margin-bottom: 8px; 
+        .ocr-result h4 {
+            color: var(--jade);
+            margin-bottom: 8px;
             font-size: 13px;
             display: flex;
             align-items: center;
             gap: 6px;
         }
 
-        .ocr-lines {
-            max-height: 280px;
-            overflow-y: auto;
-        }
-
+        .ocr-lines { max-height: 280px; overflow-y: auto; }
         .ocr-line {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 10px;
-            margin-bottom: 6px;
-            background: rgba(0,0,0,0.25);
-            border-radius: 8px;
-            font-size: 13px;
-            border-left: 3px solid transparent;
-            transition: all 0.2s;
+            display: flex; align-items: center; gap: 8px;
+            padding: 8px 10px; margin-bottom: 6px;
+            background: rgba(0,0,0,0.25); border-radius: 8px;
+            font-size: 13px; border-left: 3px solid transparent;
         }
-
-        .ocr-line.assigned {
-            border-left-color: var(--primary);
-            background: rgba(6, 214, 160, 0.08);
-        }
-
-        .ocr-line.ignored {
-            opacity: 0.4;
-        }
-
-        .ocr-line-text {
-            flex: 1;
-            word-break: break-all;
-            line-height: 1.3;
-        }
-
+        .ocr-line.assigned { border-left-color: var(--jade); background: rgba(47,159,121,0.08); }
+        .ocr-line.ignored { opacity: 0.4; }
+        .ocr-line-text { flex: 1; word-break: break-all; line-height: 1.3; }
         .ocr-line-select {
-            flex-shrink: 0;
-            padding: 6px 8px;
-            border-radius: 6px;
-            font-size: 12px;
-            font-family: inherit;
-            background: rgba(255,255,255,0.1);
-            color: var(--text-primary);
-            border: 1px solid var(--border);
-            cursor: pointer;
-            outline: none;
-            min-width: 80px;
+            flex-shrink: 0; padding: 6px 8px; border-radius: 6px;
+            font-size: 12px; font-family: inherit;
+            background: var(--ink-3); color: var(--text);
+            border: 1px solid var(--line); cursor: pointer; outline: none; min-width: 80px;
         }
-
-        .ocr-line-select:focus {
-            border-color: var(--primary);
-        }
-
+        .ocr-line-select:focus { border-color: var(--jade); }
         .ocr-line.assigned .ocr-line-select {
-            background: rgba(6, 214, 160, 0.2);
-            border-color: var(--primary);
-            color: var(--primary);
-            font-weight: 600;
+            background: rgba(47,159,121,0.18); border-color: var(--jade);
+            color: var(--jade); font-weight: 600;
         }
 
-        .ocr-apply-bar {
-            display: flex;
-            gap: 8px;
-            margin-top: 10px;
-        }
-
-        .ai-summary {
-            font-size: 12px;
-            color: var(--text-secondary);
-            line-height: 1.6;
-            max-height: 200px;
-            overflow-y: auto;
-        }
-
-        .ai-summary-row {
-            display: flex;
-            gap: 8px;
-            padding: 4px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-        }
-
-        .ai-summary-label {
-            color: var(--primary);
-            min-width: 60px;
-            font-weight: 600;
-        }
-
-        .ai-summary-value {
-            flex: 1;
-            color: var(--text-primary);
-            word-break: break-all;
-        }
-
+        .ocr-apply-bar { display: flex; gap: 8px; margin-top: 10px; }
         .ocr-apply-bar button {
-            flex: 1;
-            padding: 10px;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 600;
-            border: none;
-            cursor: pointer;
-            font-family: inherit;
+            flex: 1; padding: 10px; border-radius: 8px;
+            font-size: 13px; font-weight: 600; border: none;
+            cursor: pointer; font-family: inherit;
         }
+        .ocr-apply-btn { background: linear-gradient(150deg, var(--jade), var(--jade-deep)); color: #f4fbf7; }
+        .ocr-rescan-btn { background: var(--ink-3); color: var(--text-2); border: 1px solid var(--line) !important; }
 
-        .ocr-apply-btn {
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            color: white;
-        }
+        .ai-summary { font-size: 12px; color: var(--text-2); line-height: 1.6; max-height: 200px; overflow-y: auto; }
+        .ai-summary-row { display: flex; gap: 8px; padding: 4px 0; border-bottom: 1px solid var(--line); }
+        .ai-summary-row:last-child { border-bottom: none; }
+        .ai-summary-label { color: var(--jade); min-width: 60px; font-weight: 600; }
+        .ai-summary-value { flex: 1; color: var(--text); word-break: break-all; font-variant-numeric: tabular-nums; }
 
-        .ocr-rescan-btn {
-            background: rgba(255,255,255,0.1);
-            color: var(--text-secondary);
-            border: 1px solid var(--border) !important;
-        }
-
-        /* 詳細頁 */
-        .detail-header { display: flex; gap: 12px; margin-bottom: 14px; }
+        /* ── 詳細頁 ─────────────────────── */
+        .detail-header { display: flex; gap: 13px; margin-bottom: 14px; align-items: center; }
 
         .detail-avatar {
-            width: 65px;
-            height: 65px;
-            border-radius: 14px;
+            width: 64px;
+            height: 64px;
+            border-radius: 9px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 28px;
+            font-size: 30px;
             font-weight: 700;
-            background: linear-gradient(135deg, var(--primary), var(--accent));
-            color: white;
+            font-family: 'Noto Serif TC', serif;
+            background: linear-gradient(160deg, var(--seal), var(--seal-deep));
+            color: #fdf9ef;
             background-size: cover;
             background-position: center;
             flex-shrink: 0;
+            transform: rotate(-2.5deg);
+            box-shadow: inset 0 0 0 2px rgba(253,249,239,0.26), 0 3px 10px rgba(0,0,0,0.3);
         }
 
-        .detail-info h2 { font-size: 22px; margin-bottom: 2px; }
-        .detail-info .name-en { font-size: 13px; color: var(--text-muted); margin-bottom: 4px; }
-        .detail-info p { color: var(--text-secondary); font-size: 13px; }
+        .detail-info h2 {
+            font-family: 'Noto Serif TC', serif;
+            font-size: 23px;
+            margin-bottom: 2px;
+            letter-spacing: 0.03em;
+        }
+        .detail-info .name-en { font-size: 13px; color: var(--text-3); margin-bottom: 4px; }
+        .detail-info p { color: var(--text-2); font-size: 13px; }
 
         .detail-category {
             display: inline-block;
-            padding: 3px 8px;
-            border-radius: 8px;
+            padding: 3px 9px;
+            border-radius: 4px;
             font-size: 10px;
-            font-weight: 600;
-            margin-top: 5px;
-            background: rgba(255,255,255,0.1);
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            margin-top: 6px;
+            background: transparent;
+            color: var(--seal);
+            border: 1.5px solid rgba(200,64,42,0.55);
         }
 
-        .detail-images {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 14px;
-        }
-
+        .detail-images { display: flex; gap: 8px; margin-bottom: 14px; }
         .detail-image {
             flex: 1;
-            border-radius: 10px;
-            border: 1px solid var(--border);
+            border-radius: 8px;
+            border: 1px solid var(--line);
             overflow: hidden;
+            background: var(--ink);
         }
-
-        .detail-image img {
-            width: 100%;
-            display: block;
-        }
-
+        .detail-image img { width: 100%; display: block; }
         .detail-image-label {
-            font-size: 10px;
-            color: var(--text-muted);
-            text-align: center;
-            padding: 4px;
+            font-size: 10px; color: var(--text-3);
+            text-align: center; padding: 4px;
             background: rgba(0,0,0,0.3);
+            letter-spacing: 0.1em;
         }
 
         .detail-section {
-            background: rgba(255,255,255,0.04);
+            background: var(--ink);
             border-radius: 10px;
-            padding: 12px;
+            padding: 4px 14px;
             margin-bottom: 12px;
+            border: 1px solid var(--line);
         }
 
         .detail-row {
             display: flex;
             align-items: center;
-            padding: 7px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.06);
+            padding: 10px 0;
+            border-bottom: 1px solid var(--line);
         }
-
         .detail-row:last-child { border-bottom: none; }
-        .detail-row-icon { font-size: 14px; margin-right: 8px; }
-        .detail-row-label { width: 55px; font-size: 11px; color: var(--text-muted); }
-        .detail-row-value { flex: 1; font-size: 13px; word-break: break-all; }
-        .detail-row-value a { color: var(--text-primary); text-decoration: none; }
-        .detail-row-value a:hover { color: var(--primary); }
-        .detail-row-value.line { color: var(--primary); font-weight: 500; }
+        .detail-row-icon { display: none; }
+        .detail-row-label {
+            width: 52px;
+            font-size: 11px;
+            color: var(--text-3);
+            letter-spacing: 0.1em;
+            flex-shrink: 0;
+        }
+        .detail-row-value {
+            flex: 1;
+            font-size: 13.5px;
+            word-break: break-all;
+            font-variant-numeric: tabular-nums;
+        }
+        .detail-row-value a { color: var(--text); text-decoration: none; border-bottom: 1px dotted rgba(236,231,218,0.3); }
+        .detail-row-value a:hover { color: var(--jade); border-bottom-color: var(--jade); }
+        .detail-row-value.line { color: var(--jade); font-weight: 600; }
 
-        .detail-notes { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 12px; margin-bottom: 12px; }
-        .detail-notes h4 { font-size: 12px; color: var(--text-secondary); margin-bottom: 5px; }
-        .detail-notes p { font-size: 13px; line-height: 1.5; }
+        .detail-notes {
+            background: var(--ink);
+            border-radius: 10px;
+            padding: 12px 14px;
+            margin-bottom: 12px;
+            border: 1px solid var(--line);
+        }
+        .detail-notes h4 { font-size: 11px; color: var(--text-3); margin-bottom: 6px; letter-spacing: 0.1em; }
+        .detail-notes p { font-size: 13px; line-height: 1.6; color: var(--text-2); }
 
-        .empty-state { text-align: center; padding: 50px 20px; color: var(--text-muted); }
-        .empty-state-icon { font-size: 45px; margin-bottom: 12px; opacity: 0.5; }
-        .empty-state h3 { font-size: 15px; margin-bottom: 6px; color: var(--text-secondary); }
+        /* ── 空狀態 ─────────────────────── */
+        .empty-state { text-align: center; padding: 56px 20px; color: var(--text-3); }
+        .empty-state-icon { font-size: 42px; margin-bottom: 12px; opacity: 0.45; }
+        .empty-state h3 { font-size: 15px; margin-bottom: 6px; color: var(--text-2); font-family: 'Noto Serif TC', serif; }
 
+        /* ── 通知 ─────────────────────── */
         .notification {
             position: fixed;
             top: calc(10px + env(safe-area-inset-top));
             left: 50%;
             transform: translateX(-50%) translateY(-100px);
-            background: var(--primary);
-            color: white;
+            background: var(--paper);
+            color: var(--ink-txt);
             padding: 10px 20px;
             border-radius: 8px;
-            font-weight: 500;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            font-weight: 600;
+            box-shadow: 0 10px 36px rgba(0,0,0,0.45);
             z-index: 300;
             transition: transform 0.3s;
             font-size: 13px;
             max-width: 90%;
             text-align: center;
+            border-left: 4px solid var(--text-3);
         }
-
         .notification.active { transform: translateX(-50%) translateY(0); }
-        .notification.error { background: var(--danger); }
-        .notification.success { background: var(--success); }
+        .notification.error { border-left-color: var(--danger); }
+        .notification.success { border-left-color: var(--jade); }
 
         .loading {
             display: inline-block;
             width: 16px;
             height: 16px;
             border: 2px solid rgba(255,255,255,0.3);
-            border-top-color: white;
+            border-top-color: #fff;
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
         }
-
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        .sync-status { font-size: 10px; color: var(--text-muted); display: flex; align-items: center; gap: 4px; }
-        .sync-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-muted); }
-        .sync-dot.online { background: var(--success); }
-        .sync-dot.syncing { background: var(--accent); animation: pulse 1s infinite; }
+        .sync-status { font-size: 10px; color: var(--text-3); display: flex; align-items: center; gap: 4px; }
+        .sync-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-3); }
+        .sync-dot.online { background: var(--jade); }
+        .sync-dot.syncing { background: var(--seal); animation: pulse 1s infinite; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
         .hidden-input { display: none; }
 
         .loading-overlay {
             position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(15, 23, 42, 0.9);
+            inset: 0;
+            background: rgba(19,20,25,0.9);
             display: none;
             align-items: center;
             justify-content: center;
@@ -812,135 +774,96 @@
             gap: 16px;
             z-index: 400;
         }
-
         .loading-overlay.active { display: flex; }
-        .loading-overlay .loading { width: 40px; height: 40px; border-width: 3px; }
-        .loading-overlay p { color: var(--text-secondary); font-size: 14px; }
+        .loading-overlay .loading { width: 40px; height: 40px; border-width: 3px; border-top-color: var(--jade); }
+        .loading-overlay p { color: var(--text-2); font-size: 14px; }
 
-        /* 分類管理 Modal */
-        .category-list {
-            max-height: 300px;
-            overflow-y: auto;
-        }
-
+        /* ── 分類管理 ─────────────────── */
+        .category-list { max-height: 300px; overflow-y: auto; }
         .category-item {
             display: flex;
             align-items: center;
             justify-content: space-between;
             padding: 10px 12px;
-            background: rgba(255,255,255,0.05);
+            background: var(--ink);
+            border: 1px solid var(--line);
             border-radius: 8px;
             margin-bottom: 8px;
         }
-
-        .category-item-name {
-            font-size: 14px;
-        }
-
+        .category-item-name { font-size: 14px; }
         .category-item-delete {
-            padding: 4px 8px;
-            background: rgba(239, 68, 68, 0.1);
-            border: none;
-            border-radius: 4px;
-            color: #f87171;
+            padding: 4px 9px;
+            background: rgba(208,82,82,0.1);
+            border: 1px solid rgba(208,82,82,0.3);
+            border-radius: 5px;
+            color: #e08a8a;
             font-size: 12px;
             cursor: pointer;
+            font-family: inherit;
         }
+        .add-category-row { display: flex; gap: 8px; margin-top: 12px; }
+        .add-category-row input { flex: 1; }
 
-        .add-category-row {
-            display: flex;
-            gap: 8px;
-            margin-top: 12px;
-        }
-
-        .add-category-row input {
-            flex: 1;
-        }
-
-        /* 分享 Modal */
-        .share-hint {
-            font-size: 13px;
-            color: var(--text-secondary);
-            line-height: 1.5;
-            margin-bottom: 16px;
-            text-align: center;
-        }
-
+        /* ── 分享 ─────────────────────── */
+        .share-hint { font-size: 13px; color: var(--text-2); line-height: 1.6; margin-bottom: 16px; text-align: center; }
         .share-qr {
-            display: flex;
-            justify-content: center;
-            padding: 16px;
-            background: white;
-            border-radius: 12px;
-            margin-bottom: 16px;
+            display: flex; justify-content: center;
+            padding: 16px; background: var(--paper);
+            border-radius: 10px; margin-bottom: 16px;
+            border: 1px solid var(--paper-edge);
         }
-
-        .share-qr img, .share-qr canvas {
-            display: block;
-        }
-
+        .share-qr img, .share-qr canvas { display: block; }
         .share-url-box {
-            background: rgba(255,255,255,0.06);
-            border: 1px solid var(--border);
+            background: var(--ink);
+            border: 1px solid var(--line);
             border-radius: 8px;
             padding: 12px;
             margin-bottom: 4px;
         }
+        .share-url { font-size: 12px; color: var(--jade); word-break: break-all; line-height: 1.4; }
 
-        .share-url {
-            font-size: 12px;
-            color: var(--primary);
-            word-break: break-all;
-            line-height: 1.4;
-        }
-
-        /* 圖片編輯器 Modal */
+        /* ── 圖片編輯器 ─────────────────── */
         .image-editor-overlay {
             position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0, 0, 0, 0.95);
+            inset: 0;
+            background: rgba(10,11,14,0.97);
             display: none;
             flex-direction: column;
             z-index: 500;
             padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0;
         }
-
-        .image-editor-overlay.active {
-            display: flex;
-        }
+        .image-editor-overlay.active { display: flex; }
 
         .image-editor-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             padding: 12px 16px;
-            background: rgba(30, 41, 59, 0.9);
-            border-bottom: 1px solid var(--border);
+            background: var(--ink-2);
+            border-bottom: 1px solid var(--line);
         }
-
         .image-editor-header h3 {
+            font-family: 'Noto Serif TC', serif;
             font-size: 16px;
-            font-weight: 600;
+            font-weight: 700;
         }
-
         .image-editor-close {
-            width: 32px;
-            height: 32px;
+            width: 32px; height: 32px;
             border-radius: 8px;
-            background: rgba(255,255,255,0.1);
-            border: none;
-            color: var(--text-secondary);
-            font-size: 18px;
+            background: var(--ink-3);
+            border: 1px solid var(--line);
+            color: var(--text-2);
+            font-size: 17px;
             cursor: pointer;
         }
 
         .image-editor-hint {
             padding: 8px 16px;
-            background: rgba(6, 214, 160, 0.12);
-            color: var(--primary);
+            background: rgba(47,159,121,0.09);
+            color: var(--jade);
             font-size: 12px;
             text-align: center;
-            border-bottom: 1px solid var(--border);
+            border-bottom: 1px solid var(--line);
         }
 
         .image-editor-container {
@@ -952,19 +875,14 @@
             background: #000;
             min-height: 0;
         }
-
-        .image-editor-container img {
-            max-width: 100%;
-            max-height: 100%;
-            display: block;
-        }
+        .image-editor-container img { max-width: 100%; max-height: 100%; display: block; }
 
         .image-editor-tools {
             display: flex;
             gap: 8px;
             padding: 10px 12px;
-            background: rgba(30, 41, 59, 0.95);
-            border-top: 1px solid var(--border);
+            background: var(--ink-2);
+            border-top: 1px solid var(--line);
             justify-content: center;
             flex-wrap: wrap;
         }
@@ -978,45 +896,30 @@
             width: 52px;
             padding: 8px 4px;
             border-radius: 10px;
-            background: rgba(255,255,255,0.08);
-            color: var(--text-primary);
-            border: 1px solid var(--border);
+            background: var(--ink-3);
+            color: var(--text);
+            border: 1px solid var(--line);
             cursor: pointer;
             font-family: inherit;
-            transition: all 0.2s;
+            transition: background 0.15s, transform 0.12s;
         }
-
-        .editor-tool-btn:active {
-            background: var(--primary);
-            transform: scale(0.95);
-        }
+        .editor-tool-btn:active { background: var(--jade); transform: scale(0.95); }
+        .editor-tool-btn span { font-size: 18px; line-height: 1; }
+        .editor-tool-btn small { font-size: 10px; color: var(--text-2); }
 
         .editor-tool-btn.restore-btn {
-            background: linear-gradient(135deg, var(--warning), #d97706);
-            border-color: transparent;
+            background: transparent;
+            border: 1.5px solid rgba(200,64,42,0.6);
         }
-
-        .editor-tool-btn.restore-btn small {
-            color: rgba(255,255,255,0.95);
-        }
-
-        .editor-tool-btn span {
-            font-size: 18px;
-            line-height: 1;
-        }
-
-        .editor-tool-btn small {
-            font-size: 10px;
-            color: var(--text-secondary);
-        }
+        .editor-tool-btn.restore-btn small { color: var(--seal); font-weight: 600; }
 
         .image-editor-actions {
             display: flex;
             gap: 12px;
             padding: 12px 16px;
             padding-bottom: calc(12px + env(safe-area-inset-bottom));
-            background: rgba(30, 41, 59, 0.95);
-            border-top: 1px solid var(--border);
+            background: var(--ink-2);
+            border-top: 1px solid var(--line);
         }
 
         .editor-btn {
@@ -1032,51 +935,41 @@
             align-items: center;
             justify-content: center;
             gap: 6px;
-            transition: all 0.2s;
+            transition: filter 0.15s, transform 0.12s;
         }
-
+        .editor-btn:active { transform: scale(0.98); }
         .editor-btn.cancel {
-            background: rgba(255,255,255,0.1);
-            color: var(--text-secondary);
-            border: 1px solid var(--border);
+            background: var(--ink-3);
+            color: var(--text-2);
+            border: 1px solid var(--line);
         }
-
         .editor-btn.confirm {
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            color: white;
+            background: linear-gradient(150deg, var(--jade), var(--jade-deep));
+            color: #f4fbf7;
         }
 
-        /* Cropper.js 覆蓋樣式 */
-        .cropper-view-box,
-        .cropper-face {
-            border-radius: 0;
-        }
+        /* Cropper.js 覆蓋 */
+        .cropper-view-box, .cropper-face { border-radius: 0; }
+        .cropper-view-box { outline: 2px solid var(--jade); outline-offset: -2px; }
+        .cropper-line { background-color: var(--jade); }
+        .cropper-point { background-color: var(--jade); width: 10px; height: 10px; }
+        .cropper-modal { background-color: rgba(0,0,0,0.7); }
 
-        .cropper-view-box {
-            outline: 2px solid var(--primary);
-            outline-offset: -2px;
-        }
-
-        .cropper-line {
-            background-color: var(--primary);
-        }
-
-        .cropper-point {
-            background-color: var(--primary);
-            width: 10px;
-            height: 10px;
-        }
-
-        .cropper-modal {
-            background-color: rgba(0, 0, 0, 0.7);
-        }
-
+        /* ── RWD 與可近性 ─────────────── */
         @media (max-width: 480px) {
             .header-top { flex-wrap: wrap; }
             .form-row { grid-template-columns: 1fr; }
             .cards-grid { grid-template-columns: 1fr; }
             .avatar-section { flex-direction: column; text-align: center; }
             .avatar-btns { justify-content: center; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                transition-duration: 0.01ms !important;
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+            }
         }
     </style>
 </head>
@@ -1122,10 +1015,10 @@
     <header class="header">
         <div class="header-top">
             <div class="logo">
-                <div class="logo-icon">📇</div>
+                <div class="logo-icon">名</div>
                 <div class="logo-text">
                     <h1>名片管理中心</h1>
-                    <p>☁️ AI 智慧辨識版 v8</p>
+                    <p>AI 智慧辨識 · v9</p>
                 </div>
             </div>
             <div class="header-actions">
@@ -1168,12 +1061,12 @@
     <div class="modal-overlay" id="addModal">
         <div class="modal">
             <div class="modal-header">
-                <h2 id="modalTitle">➕ 新增名片</h2>
+                <h2 id="modalTitle">新增名片</h2>
                 <button class="modal-close" onclick="closeAddModal()">✕</button>
             </div>
 
             <div class="image-section">
-                <div class="image-section-title">📸 名片照片</div>
+                <div class="image-section-title">名片照片</div>
                 <div class="image-row">
                     <div class="image-box" id="cardFrontBox" onclick="editCardImage('front')">
                         <span class="image-box-icon">📄</span>
@@ -1207,7 +1100,7 @@
             <div class="avatar-section">
                 <div class="avatar-preview" id="avatarPreview">👤</div>
                 <div class="avatar-info">
-                    <h4>📸 大頭照</h4>
+                    <h4>大頭照</h4>
                     <p>上傳聯絡人照片</p>
                     <div class="avatar-btns">
                         <button type="button" class="avatar-btn" onclick="captureAvatar()">📷 拍照</button>
@@ -1218,21 +1111,21 @@
 
             <div class="form-row">
                 <div class="form-group">
-                    <label class="form-label">👤 姓名（中文）*</label>
+                    <label class="form-label">姓名（中文）*</label>
                     <input type="text" class="form-input" id="cardName" placeholder="王大明">
                 </div>
                 <div class="form-group">
-                    <label class="form-label">🔤 英文名</label>
+                    <label class="form-label">英文名</label>
                     <input type="text" class="form-input" id="cardNameEn" placeholder="David Wang">
                 </div>
             </div>
             <div class="form-row">
                 <div class="form-group">
-                    <label class="form-label">🏢 公司</label>
+                    <label class="form-label">公司</label>
                     <input type="text" class="form-input" id="cardCompany" placeholder="台灣科技公司">
                 </div>
                 <div class="form-group">
-                    <label class="form-label">📁 分類</label>
+                    <label class="form-label">分類</label>
                     <div class="form-input-row">
                         <select class="form-input" id="cardCategory"></select>
                         <button type="button" class="btn btn-secondary" onclick="openCategoryModal()">⚙️</button>
@@ -1240,53 +1133,53 @@
                 </div>
             </div>
             <div class="form-group">
-                <label class="form-label">💼 職稱</label>
+                <label class="form-label">職稱</label>
                 <input type="text" class="form-input" id="cardTitle" placeholder="業務經理">
             </div>
             <div class="form-row">
                 <div class="form-group">
-                    <label class="form-label">📱 行動電話1</label>
+                    <label class="form-label">行動電話 1</label>
                     <input type="tel" class="form-input" id="cardMobile" placeholder="0912-345-678">
                 </div>
                 <div class="form-group">
-                    <label class="form-label">📱 行動電話2</label>
+                    <label class="form-label">行動電話 2</label>
                     <input type="tel" class="form-input" id="cardMobile2" placeholder="第二支手機">
                 </div>
             </div>
             <div class="form-row">
                 <div class="form-group">
-                    <label class="form-label">☎️ 市話</label>
+                    <label class="form-label">市話</label>
                     <input type="tel" class="form-input" id="cardPhone" placeholder="(02)1234-5678">
                 </div>
                 <div class="form-group">
-                    <label class="form-label">📠 傳真</label>
+                    <label class="form-label">傳真</label>
                     <input type="tel" class="form-input" id="cardFax" placeholder="(02)1234-5678">
                 </div>
             </div>
             <div class="form-group">
-                <label class="form-label">🔢 統編</label>
+                <label class="form-label">統編</label>
                 <input type="text" class="form-input" id="cardTaxId" placeholder="12345678">
             </div>
             <div class="form-row">
                 <div class="form-group">
-                    <label class="form-label">💬 LINE ID</label>
+                    <label class="form-label">LINE ID</label>
                     <input type="text" class="form-input highlight" id="cardLine" placeholder="line_id">
                 </div>
                 <div class="form-group">
-                    <label class="form-label">✉️ Email</label>
+                    <label class="form-label">Email</label>
                     <input type="email" class="form-input" id="cardEmail" placeholder="email@example.com">
                 </div>
             </div>
             <div class="form-group">
-                <label class="form-label">📍 地址</label>
+                <label class="form-label">地址</label>
                 <input type="text" class="form-input" id="cardAddress" placeholder="台北市...">
             </div>
             <div class="form-group">
-                <label class="form-label">🌐 網站</label>
+                <label class="form-label">網站</label>
                 <input type="text" class="form-input" id="cardWebsite" placeholder="www.example.com">
             </div>
             <div class="form-group">
-                <label class="form-label">📝 備註</label>
+                <label class="form-label">備註</label>
                 <textarea class="form-input" id="cardNotes" placeholder="備註..."></textarea>
             </div>
             <div class="form-actions">
@@ -1300,7 +1193,7 @@
     <div class="modal-overlay" id="detailModal">
         <div class="modal">
             <div class="modal-header">
-                <h2>📇 名片詳情</h2>
+                <h2>名片詳情</h2>
                 <button class="modal-close" onclick="closeDetailModal()">✕</button>
             </div>
             <div id="detailContent"></div>
@@ -1311,7 +1204,7 @@
     <div class="modal-overlay" id="categoryModal">
         <div class="modal">
             <div class="modal-header">
-                <h2>⚙️ 管理分類</h2>
+                <h2>管理分類</h2>
                 <button class="modal-close" onclick="closeCategoryModal()">✕</button>
             </div>
             <div class="category-list" id="categoryList"></div>
@@ -1326,7 +1219,7 @@
     <div class="modal-overlay" id="shareModal">
         <div class="modal">
             <div class="modal-header">
-                <h2>📤 分享給同事</h2>
+                <h2>分享給同事</h2>
                 <button class="modal-close" onclick="closeShareModal()">✕</button>
             </div>
             <p class="share-hint">同事掃描 QR code 或開啟下方網址即可使用，免設定、免登入</p>
@@ -1432,12 +1325,12 @@
                     text: url,
                     width: 200,
                     height: 200,
-                    colorDark: '#0f172a',
+                    colorDark: '#29251a',
                     colorLight: '#ffffff',
                     correctLevel: QRCode.CorrectLevel.M
                 });
             } catch (e) {
-                qrBox.innerHTML = '<span style="color:#64748b;font-size:13px;">QR code 載入失敗，請用下方網址</span>';
+                qrBox.innerHTML = '<span style="color:#857f70;font-size:13px;">QR code 載入失敗，請用下方網址</span>';
             }
 
             document.getElementById('shareModal').classList.add('active');
@@ -1819,11 +1712,11 @@
 
             // 更新標題、提示
             if (type === 'avatar') {
-                document.getElementById('editorTitle').textContent = '📐 調整大頭照';
+                document.getElementById('editorTitle').textContent = '調整大頭照';
                 document.getElementById('editorHint').textContent = '💡 拖曳調整範圍（固定正方形），可旋轉';
                 if (restoreBtn) restoreBtn.style.display = 'none';
             } else {
-                document.getElementById('editorTitle').textContent = '📐 調整名片範圍';
+                document.getElementById('editorTitle').textContent = '調整名片範圍';
                 document.getElementById('editorHint').textContent = '💡 拖曳四角框住名片，切不好可按「↩️ 還原原圖」重裁';
                 // 有原圖才顯示還原按鈕
                 var hasOrig = side === 'front' ? cardFrontOriginal : cardBackOriginal;
@@ -2142,7 +2035,7 @@
         // ===== Modal =====
         function openAddModal() {
             editingId = null;
-            document.getElementById('modalTitle').textContent = '➕ 新增名片';
+            document.getElementById('modalTitle').textContent = '新增名片';
             clearForm();
             document.getElementById('addModal').classList.add('active');
             document.body.style.overflow = 'hidden';
@@ -2325,7 +2218,7 @@
             if (!card) return;
 
             editingId = id;
-            document.getElementById('modalTitle').textContent = '✏️ 編輯名片';
+            document.getElementById('modalTitle').textContent = '編輯名片';
             
             document.getElementById('cardName').value = card.name || '';
             document.getElementById('cardNameEn').value = card.nameEn || '';
@@ -2461,7 +2354,7 @@
                 var el = document.getElementById(id);
                 if (el && map[id]) {
                     el.value = map[id];
-                    el.style.backgroundColor = 'rgba(6, 214, 160, 0.2)';
+                    el.style.backgroundColor = 'rgba(47, 159, 121, 0.22)';
                     setTimeout(function() { el.style.backgroundColor = ''; }, 1000);
                 }
             });
