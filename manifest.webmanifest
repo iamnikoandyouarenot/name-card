@@ -1,0 +1,11 @@
+{
+  "name": "名片管理中心",
+  "short_name": "名片",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#191b21",
+  "theme_color": "#191b21",
+  "icons": [
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
