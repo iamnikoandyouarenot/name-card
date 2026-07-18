@@ -783,7 +783,36 @@
         .loading-overlay p { color: var(--text-2); font-size: 14px; }
 
         /* ── 分類管理 ─────────────────── */
-        .category-list { max-height: 300px; overflow-y: auto; }
+        .category-list {
+            max-height: min(56vh, 540px);
+            min-height: 160px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        /* 桌機：分類管理視窗加寬、可移動、邊緣可拉伸 */
+        .modal-resize-r, .modal-resize-b, .modal-resize-br { display: none; }
+
+        @media (min-width: 768px) {
+            #categoryModal .modal {
+                max-width: 560px;
+                position: relative;
+                display: flex;
+                flex-direction: column;
+            }
+            #categoryModal .modal-header { cursor: move; flex-shrink: 0; }
+            #categoryModal .add-category-row { flex-shrink: 0; }
+            #categoryModal .category-list { flex: 1; }
+
+            .modal-resize-r, .modal-resize-b, .modal-resize-br {
+                display: block;
+                position: absolute;
+                z-index: 5;
+            }
+            .modal-resize-r  { top: 0; right: -3px; width: 8px; height: 100%; cursor: ew-resize; }
+            .modal-resize-b  { left: 0; bottom: -3px; width: 100%; height: 8px; cursor: ns-resize; }
+            .modal-resize-br { right: -4px; bottom: -4px; width: 18px; height: 18px; cursor: nwse-resize; }
+        }
         .category-item {
             display: flex;
             align-items: center;
@@ -1222,7 +1251,7 @@
 
     <!-- 分類管理 Modal -->
     <div class="modal-overlay" id="categoryModal">
-        <div class="modal">
+        <div class="modal" id="categoryModalBox">
             <div class="modal-header">
                 <h2>管理分類</h2>
                 <button class="modal-close" onclick="closeCategoryModal()">✕</button>
@@ -1232,6 +1261,9 @@
                 <input type="text" class="form-input" id="newCategoryInput" placeholder="輸入新分類名稱...">
                 <button class="btn btn-primary" onclick="addNewCategory()">➕ 新增</button>
             </div>
+            <div class="modal-resize-r" data-dir="r"></div>
+            <div class="modal-resize-b" data-dir="b"></div>
+            <div class="modal-resize-br" data-dir="br"></div>
         </div>
     </div>
 
@@ -1322,6 +1354,18 @@
         // ===== 分類管理 =====
         function openCategoryModal() {
             renderCategoryList();
+            // 重置視窗位置與尺寸（上次拖過/拉過的歸零，恢復置中）
+            var m = document.querySelector('#categoryModal .modal');
+            m.style.transform = '';
+            m.style.width = '';
+            m.style.height = '';
+            m.style.maxWidth = '';
+            m.style.position = '';
+            m.style.left = '';
+            m.style.top = '';
+            m.style.margin = '';
+            m.dataset.tx = 0; m.dataset.ty = 0;
+            document.getElementById('categoryList').style.maxHeight = '';
             document.getElementById('categoryModal').classList.add('active');
             document.getElementById('newCategoryInput').value = '';
         }
@@ -1329,6 +1373,105 @@
         function closeCategoryModal() {
             document.getElementById('categoryModal').classList.remove('active');
         }
+
+        // ── 桌機：拖曳標題列移動視窗、拖曳邊緣調整大小 ──
+        (function initCategoryModalDrag() {
+            var header = document.querySelector('#categoryModal .modal-header');
+            var modal = document.querySelector('#categoryModal .modal');
+            if (!header || !modal) return;
+            var drag = null;    // 移動狀態
+            var resize = null;  // 拉伸狀態
+
+            // 移動
+            header.addEventListener('pointerdown', function(e) {
+                if (window.innerWidth < 768) return;
+                if (e.target.closest('.modal-close')) return;
+                e.preventDefault();
+                drag = {
+                    sx: e.clientX, sy: e.clientY,
+                    ox: parseFloat(modal.dataset.tx || 0),
+                    oy: parseFloat(modal.dataset.ty || 0)
+                };
+                document.addEventListener('pointermove', onMove);
+                document.addEventListener('pointerup', onUp);
+            });
+
+            // 拉伸（三個把手共用）
+            modal.querySelectorAll('.modal-resize-r, .modal-resize-b, .modal-resize-br').forEach(function(h) {
+                h.addEventListener('pointerdown', function(e) {
+                    if (window.innerWidth < 768) return;
+                    e.preventDefault();
+                    e.stopPropagation();
+                    var rect = modal.getBoundingClientRect();
+
+                    // 先「錨定」：固定目前位置與尺寸，脫離置中排版
+                    // → 按下瞬間尺寸不變；拉右邊只有右邊動、左邊固定
+                    modal.style.position = 'fixed';
+                    modal.style.left = rect.left + 'px';
+                    modal.style.top = rect.top + 'px';
+                    modal.style.margin = '0';
+                    modal.style.transform = 'none';
+                    modal.dataset.tx = 0; modal.dataset.ty = 0;
+                    modal.style.width = rect.width + 'px';
+                    modal.style.height = rect.height + 'px';
+                    // 尺寸鎖定後才解除上限
+                    modal.style.maxWidth = 'none';
+                    document.getElementById('categoryList').style.maxHeight = 'none';
+
+                    resize = {
+                        dir: h.dataset.dir,
+                        sx: e.clientX, sy: e.clientY,
+                        w: rect.width, h: rect.height,
+                        left: rect.left, top: rect.top
+                    };
+                    document.addEventListener('pointermove', onMove);
+                    document.addEventListener('pointerup', onUp);
+                });
+            });
+
+            function onMove(e) {
+                if (resize) {
+                    var minW = 380, minH = 300;
+                    var maxW = window.innerWidth - resize.left - 10;
+                    var maxH = window.innerHeight - resize.top - 10;
+                    if (resize.dir === 'r' || resize.dir === 'br') {
+                        var w = resize.w + (e.clientX - resize.sx);
+                        modal.style.width = Math.min(maxW, Math.max(minW, w)) + 'px';
+                    }
+                    if (resize.dir === 'b' || resize.dir === 'br') {
+                        var hh = resize.h + (e.clientY - resize.sy);
+                        modal.style.height = Math.min(maxH, Math.max(minH, hh)) + 'px';
+                    }
+                    return;
+                }
+                if (drag) {
+                    var tx = drag.ox + (e.clientX - drag.sx);
+                    var ty = drag.oy + (e.clientY - drag.sy);
+                    modal.dataset.tx = tx; modal.dataset.ty = ty;
+                    modal.style.transform = 'translate(' + tx + 'px,' + ty + 'px)';
+                }
+            }
+
+            function onUp() {
+                var wasActive = !!(drag || resize);
+                drag = null;
+                resize = null;
+                document.removeEventListener('pointermove', onMove);
+                document.removeEventListener('pointerup', onUp);
+                if (wasActive) {
+                    // 吞掉拖放結束合成的 click，避免觸發「點背景關閉」
+                    document.addEventListener('click', swallowClick, true);
+                    setTimeout(function() {
+                        document.removeEventListener('click', swallowClick, true);
+                    }, 0);
+                }
+            }
+
+            function swallowClick(e) {
+                e.stopPropagation();
+                document.removeEventListener('click', swallowClick, true);
+            }
+        })();
 
         // ===== 分享功能 =====
         var shareQrRendered = false;
