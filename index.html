@@ -788,13 +788,29 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
+            gap: 10px;
             padding: 10px 12px;
             background: var(--ink);
             border: 1px solid var(--line);
             border-radius: 8px;
             margin-bottom: 8px;
+            user-select: none;
         }
-        .category-item-name { font-size: 14px; }
+        .category-item.dragging {
+            border-color: var(--jade);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.45);
+            opacity: 0.92;
+        }
+        .category-item-handle {
+            cursor: grab;
+            color: var(--text-3);
+            font-size: 15px;
+            padding: 4px 6px;
+            touch-action: none;
+            flex-shrink: 0;
+        }
+        .category-item-handle:active { cursor: grabbing; color: var(--jade); }
+        .category-item-name { font-size: 14px; flex: 1; }
         .category-item-delete {
             padding: 4px 9px;
             background: rgba(208,82,82,0.1);
@@ -1368,12 +1384,90 @@
 
         function renderCategoryList() {
             var list = document.getElementById('categoryList');
-            list.innerHTML = categories.map(function(c) {
-                return '<div class="category-item">' +
+            list.innerHTML = categories.map(function(c, i) {
+                return '<div class="category-item" data-index="' + i + '">' +
+                    '<span class="category-item-handle" title="拖曳排序">☰</span>' +
                     '<span class="category-item-name">' + escapeHtml(c) + '</span>' +
                     '<button class="category-item-delete" onclick="deleteCategory(\'' + escapeHtml(c) + '\')">🗑️</button>' +
                 '</div>';
             }).join('');
+            bindCategoryDrag(list);
+        }
+
+        // ── 拖曳排序（Pointer Events，桌機手機通用）──
+        var dragState = null;
+
+        function bindCategoryDrag(list) {
+            var handles = list.querySelectorAll('.category-item-handle');
+            handles.forEach(function(h) {
+                h.addEventListener('pointerdown', onCatDragStart);
+            });
+        }
+
+        function onCatDragStart(e) {
+            e.preventDefault();
+            var item = e.target.closest('.category-item');
+            if (!item) return;
+            dragState = { item: item };
+            item.classList.add('dragging');
+            document.addEventListener('pointermove', onCatDragMove);
+            document.addEventListener('pointerup', onCatDragEnd);
+            document.addEventListener('pointercancel', onCatDragEnd);
+        }
+
+        function onCatDragMove(e) {
+            if (!dragState) return;
+            e.preventDefault();
+            var list = document.getElementById('categoryList');
+            var item = dragState.item;
+            var siblings = Array.prototype.filter.call(list.children, function(el) { return el !== item; });
+
+            // 找出目前指標位置該插在誰前面
+            var insertBefore = null;
+            for (var i = 0; i < siblings.length; i++) {
+                var rect = siblings[i].getBoundingClientRect();
+                if (e.clientY < rect.top + rect.height / 2) {
+                    insertBefore = siblings[i];
+                    break;
+                }
+            }
+            if (insertBefore) {
+                list.insertBefore(item, insertBefore);
+            } else {
+                list.appendChild(item);
+            }
+        }
+
+        async function onCatDragEnd() {
+            if (!dragState) return;
+            var item = dragState.item;
+            item.classList.remove('dragging');
+            document.removeEventListener('pointermove', onCatDragMove);
+            document.removeEventListener('pointerup', onCatDragEnd);
+            document.removeEventListener('pointercancel', onCatDragEnd);
+            dragState = null;
+
+            // 讀 DOM 順序 → 更新 categories → 刷新 chips 與下拉 → 存回雲端
+            var list = document.getElementById('categoryList');
+            var newOrder = Array.prototype.map.call(
+                list.querySelectorAll('.category-item-name'),
+                function(el) { return el.textContent; });
+
+            if (JSON.stringify(newOrder) === JSON.stringify(categories)) return; // 沒變
+
+            categories = newOrder;
+            renderCategoryButtons();
+            renderCategorySelect();
+            try {
+                var result = await apiCall('reorderCategories', { categories: categories });
+                if (result.success) {
+                    showNotification('分類順序已儲存', 'success');
+                } else {
+                    showNotification('順序儲存失敗: ' + (result.error || ''), 'error');
+                }
+            } catch (err) {
+                showNotification('順序儲存失敗，僅本次生效', 'error');
+            }
         }
 
         async function addNewCategory() {
@@ -2252,15 +2346,25 @@
             if (cardFrontUrl) {
                 document.getElementById('cardFrontBox').innerHTML = '<img src="' + getDriveImageUrl(cardFrontUrl) + '" alt="正面">';
                 document.getElementById('cardFrontBox').classList.add('has-image');
+            } else {
+                document.getElementById('cardFrontBox').innerHTML = '<span class="image-box-icon">📄</span><span class="image-box-label">正面</span>';
+                document.getElementById('cardFrontBox').classList.remove('has-image');
             }
             if (cardBackUrl) {
                 document.getElementById('cardBackBox').innerHTML = '<img src="' + getDriveImageUrl(cardBackUrl) + '" alt="背面">';
                 document.getElementById('cardBackBox').classList.add('has-image');
+            } else {
+                document.getElementById('cardBackBox').innerHTML = '<span class="image-box-icon">📄</span><span class="image-box-label">背面</span>';
+                document.getElementById('cardBackBox').classList.remove('has-image');
             }
             if (avatarUrl) {
                 document.getElementById('avatarPreview').style.backgroundImage = 'url("' + getDriveImageUrl(avatarUrl) + '")';
                 document.getElementById('avatarPreview').classList.add('has-image');
                 document.getElementById('avatarPreview').textContent = '';
+            } else {
+                document.getElementById('avatarPreview').style.backgroundImage = '';
+                document.getElementById('avatarPreview').classList.remove('has-image');
+                document.getElementById('avatarPreview').textContent = '👤';
             }
 
             document.getElementById('ocrResult').classList.remove('active');
